@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Star, Globe, Download, Magnet } from "lucide-react";
-import type { WebResult, Repository, Torrent, NyaaTorrent, Paper } from "../types";
+import { Star, Globe, Download, Magnet, Package, Copy, Check } from "lucide-react";
+import { useState } from "react";
+import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model } from "../types";
 
 function favicon(url: string) {
   try {
@@ -99,3 +100,174 @@ export function PaperCard({ r }: { r: Paper }) {
     </div>
   );
 }
+
+const SEVERITY_COLOR: Record<string, string> = {
+  CRITICAL: "#d32f2f",
+  HIGH:     "#e64a19",
+  MEDIUM:   "#f57c00",
+  LOW:      "#388e3c",
+};
+
+export function CVECard({ r }: { r: CVE }) {
+  const color = SEVERITY_COLOR[r.Severity?.toUpperCase()] ?? "var(--muted)";
+  return (
+    <div className="result-item">
+      <div className="result-title">
+        <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.ID}</a>
+      </div>
+      {r.Description && <div className="result-snippet">{r.Description}</div>}
+      <div className="result-meta">
+        {r.Severity && <span className="meta-pill" style={{ color, borderColor: color }}>{r.Severity}</span>}
+        {r.Score > 0 && <span>CVSS {r.Score.toFixed(1)}</span>}
+        {r.Published && <span>{r.Published.slice(0, 10)}</span>}
+      </div>
+    </div>
+  );
+}
+
+export function ExploitCard({ r }: { r: Exploit }) {
+  return (
+    <div className="result-item">
+      <div className="result-title">
+        <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+      </div>
+      <div className="result-meta">
+        {r.Type && <span className="meta-pill">{r.Type}</span>}
+        {r.Platform && <span className="meta-pill">{r.Platform}</span>}
+        {r.Author && <span>{r.Author}</span>}
+        {r.Published && <span>{r.Published}</span>}
+        {r.CVEs?.map(c => <span key={c} className="meta-pill">{c}</span>)}
+      </div>
+    </div>
+  );
+}
+
+export function AppCard({ r }: { r: App }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const isHomebrew = r.URL.includes("formulae.brew.sh");
+  const isCask = r.Developer === "Homebrew Cask";
+  const installCmd = isHomebrew
+    ? `brew install ${isCask ? "--cask " : ""}${r.AppID}`
+    : `flatpak install flathub ${r.AppID}`;
+
+  const copy = () => {
+    navigator.clipboard.writeText(installCmd);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="result-item">
+      <div className="result-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {r.Icon ? (
+             <img src={r.Icon} alt="" width={24} height={24} onError={e => e.currentTarget.style.display='none'} />
+          ) : <Package size={20} />}
+          <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Name}</a>
+        </div>
+        <button 
+          className="copy-command-btn" 
+          onClick={copy} 
+          title={installCmd}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px', 
+            fontSize: '11px', 
+            padding: '4px 8px',
+            borderRadius: '4px',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer'
+          }}
+        >
+          {copied ? <Check size={12} color="#4caf50" /> : <Copy size={12} />}
+          <code>{installCmd}</code>
+        </button>
+      </div>
+      {r.Summary && <div className="result-desc">{r.Summary}</div>}
+      <div className="result-meta">
+        {r.Developer && <span>{r.Developer}</span>}
+        {r.License && <span className="meta-pill">{r.License}</span>}
+        {r.UpdatedAt > 0 && <span>{t("fields.updated")} {new Date(r.UpdatedAt * 1000).toLocaleDateString()}</span>}
+      </div>
+    </div>
+  );
+}
+
+export function ModelCard({ r }: { r: Model }) {
+  const { t } = useTranslation();
+  return (
+    <div className="result-item">
+      <div className="result-title">
+        <a href={r.url} target="_blank" rel="noopener noreferrer">{r.name}</a>
+      </div>
+      {r.description && <div className="result-desc">{r.description}</div>}
+      {r.capabilities && r.capabilities.length > 0 && (
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px", marginBottom: "6px" }}>
+          {r.capabilities.map((cap) => {
+            let bg = "var(--bg-secondary)";
+            let fg = "var(--text-secondary)";
+            if (cap === "vision") {
+              bg = "rgba(139, 92, 246, 0.1)";
+              fg = "rgb(139, 92, 246)";
+            } else if (cap === "tools") {
+              bg = "rgba(16, 185, 129, 0.1)";
+              fg = "rgb(16, 185, 129)";
+            } else if (cap === "thinking") {
+              bg = "rgba(59, 130, 246, 0.1)";
+              fg = "rgb(59, 130, 246)";
+            } else if (cap === "cloud") {
+              bg = "rgba(6, 182, 212, 0.1)";
+              fg = "rgb(6, 182, 212)";
+            }
+            return (
+              <span
+                key={cap}
+                className="meta-pill"
+                style={{
+                  backgroundColor: bg,
+                  color: fg,
+                  borderColor: fg,
+                  fontSize: "11px",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                  fontWeight: 500,
+                }}
+              >
+                {cap}
+              </span>
+            );
+          })}
+        </div>
+      )}
+      <div className="result-meta">
+        {r.pulls && (
+          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <Download size={11} /> {r.pulls} {t("fields.pulls", "Pulls")}
+          </span>
+        )}
+        {r.tags && (
+          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <Package size={11} /> {r.tags} {t("fields.tags", "Tags")}
+          </span>
+        )}
+        {r.size && (
+          <span className="meta-pill" style={{ color: "var(--text-primary)", borderColor: "var(--border)" }}>
+            {r.size}
+          </span>
+        )}
+        {r.updated && (
+          <span>
+            {t("fields.updated")}: {r.updated}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+

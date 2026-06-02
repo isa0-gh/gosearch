@@ -146,8 +146,135 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
+  /vuln:
+    get:
+      summary: Vulnerability search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [nvd, exploitdb]
+            default: nvd
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Vulnerability results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: "#/components/schemas/CVE"
+                    - $ref: "#/components/schemas/Exploit"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /apps:
+    get:
+      summary: Application search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [flathub, homebrew]
+            default: flathub
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Application results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/App"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /ml:
+    get:
+      summary: LLM/ML model search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [ollama, huggingface]
+            default: ollama
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Model results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Model"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
 components:
   schemas:
+    App:
+      type: object
+      properties:
+        AppID:
+          type: string
+        Name:
+          type: string
+        Summary:
+          type: string
+        Developer:
+          type: string
+        License:
+          type: string
+        Icon:
+          type: string
+          format: uri
+        URL:
+          type: string
+          format: uri
+        UpdatedAt:
+          type: integer
+          description: Unix timestamp
+
     WebResult:
       type: object
       properties:
@@ -244,6 +371,72 @@ components:
         Abstract:
           type: string
         Type:
+          type: string
+
+    CVE:
+      type: object
+      properties:
+        ID:
+          type: string
+        Description:
+          type: string
+        Published:
+          type: string
+          format: date-time
+        Severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        Score:
+          type: number
+        URL:
+          type: string
+          format: uri
+
+    Exploit:
+      type: object
+      properties:
+        ID:
+          type: string
+        Title:
+          type: string
+        Type:
+          type: string
+        Platform:
+          type: string
+        Author:
+          type: string
+        Published:
+          type: string
+          format: date
+        CVEs:
+          type: array
+          items:
+            type: string
+        URL:
+          type: string
+          format: uri
+
+    Model:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        description:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        pulls:
+          type: string
+        tags:
+          type: string
+        size:
+          type: string
+        updated:
           type: string
 
   responses:

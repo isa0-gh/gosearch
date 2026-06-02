@@ -1,6 +1,6 @@
 # gosearch
 
-A self-hosted metasearch engine with a Go backend and a React frontend. It aggregates results from web search engines, software repositories, torrent indexes, and academic paper databases through a unified REST API.
+A self-hosted metasearch engine with a Go backend and a React frontend. It aggregates results from web search engines, software repositories, torrent indexes, academic paper databases, and vulnerability databases through a unified REST API.
 
 ---
 
@@ -10,6 +10,8 @@ A self-hosted metasearch engine with a Go backend and a React frontend. It aggre
 - Software repository search via GitHub, GitLab, and SourceForge
 - Torrent search via The Pirate Bay and Nyaa
 - Academic paper search via OpenAlex and NASA Technical Reports Server (NTRS)
+- Vulnerability search via NVD (CVE database) and Exploit-DB
+- App search via Flathub and Homebrew
 - Lightweight JSON API with pagination support
 - React frontend with dark mode, i18n (English and Turkish), and per-tab source switching
 
@@ -25,6 +27,8 @@ internal/
   software/      Repository search clients (GitHub, GitLab, SourceForge)
   torrents/      Torrent scrapers (Pirate Bay, Nyaa)
   academic/      Academic API clients (OpenAlex, NASA NTRS)
+  vuln/          Vulnerability clients (NVD, Exploit-DB)
+  apps/          Application API clients (Flathub, Homebrew)
 cmd/tests/       Manual test binaries for each source
 ```
 
@@ -40,8 +44,10 @@ Base URL: `http://localhost:8080/api/v1`
 |---------------|---------------------------------------------------------|
 | `/web`        | `q`, `engine=ddg\|bing\|brave`, `pages`                |
 | `/software`   | `q`, `source=github\|gitlab\|sourceforge`, `pages`     |
+| `/apps`       | `q`, `source=flathub\|homebrew`, `pages`               |
 | `/torrents`   | `q`, `source=piratebay\|nyaa`, `pages`                 |
 | `/academic`   | `q`, `source=openalex\|nasa`, `pages`                  |
+| `/vuln`       | `q`, `source=nvd\|exploitdb`, `pages`                  |
 
 All endpoints return JSON arrays. Error responses are `{"error": "..."}` with appropriate HTTP status codes. Full schema is available in `openapi.yml`.
 
@@ -96,13 +102,17 @@ go run ./cmd/tests/piratebay
 go run ./cmd/tests/nyaa
 go run ./cmd/tests/nasa
 go run ./cmd/tests/openalex
+go run ./cmd/tests/nvd
+go run ./cmd/tests/exploitdb
+go run ./cmd/tests/flathub
+go run ./cmd/tests/homebrew
 ```
 
 ---
 
 ## Notes
 
-Web search results rely on HTML scraping and may break if upstream sites change their markup. Academic sources (OpenAlex and NASA NTRS) use official JSON APIs and are stable. The GitHub source uses the official REST API; GitLab and SourceForge use their respective APIs as well.
+Web search results rely on HTML scraping and may break if upstream sites change their markup. Academic sources (OpenAlex and NASA NTRS) use official JSON APIs and are stable. The GitHub source uses the official REST API; GitLab and SourceForge use their respective APIs as well. NVD uses the official NIST REST API v2. Exploit-DB is queried via its DataTables JSON endpoint. Flathub uses its MeiliSearch-backed API. Homebrew is queried via its official website's Algolia index for search and detailed metadata is enriched from its REST API.
 
 ---
 

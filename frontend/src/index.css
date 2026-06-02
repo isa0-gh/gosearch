@@ -362,6 +362,21 @@ header {
   color: var(--accent);
 }
 
+.copy-command-btn {
+  transition: all var(--transition);
+  opacity: 0.6;
+}
+.copy-command-btn:hover {
+  opacity: 1;
+  border-color: var(--accent) !important;
+  color: var(--text) !important;
+  background: var(--accent-subtle) !important;
+}
+.copy-command-btn code {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 10px;
+}
+
 /* Result count */
 .result-count {
   font-size: 12px;

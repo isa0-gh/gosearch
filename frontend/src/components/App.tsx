@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Globe, Code, Download, BookOpen, Moon, Sun, ChevronRight } from "lucide-react";
+import { Search, Globe, Code, Download, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu } from "lucide-react";
 import { doSearch } from "../api";
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper } from "../types";
-import { WebResultCard, RepoCard, TorrentCard, PaperCard } from "./ResultCards";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App as AppType, Model as ModelType } from "../types";
+import { WebResultCard, RepoCard, TorrentCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard } from "./ResultCards";
 
 const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "web", icon: <Globe size={14} /> },
   { id: "software", icon: <Code size={14} /> },
+  { id: "apps", icon: <LayoutGrid size={14} /> },
+  { id: "ml", icon: <Cpu size={14} /> },
   { id: "torrents", icon: <Download size={14} /> },
   { id: "academic", icon: <BookOpen size={14} /> },
+  { id: "vuln", icon: <ShieldAlert size={14} /> },
 ];
 
 const SOURCE_ICONS: Record<string, string> = {
@@ -23,6 +26,12 @@ const SOURCE_ICONS: Record<string, string> = {
   nyaa:        "https://icons.bitwarden.net/nyaa.si/icon.png",
   openalex:    "https://icons.bitwarden.net/openalex.org/icon.png",
   nasa:        "https://icons.bitwarden.net/nasa.gov/icon.png",
+  nvd:         "https://icons.bitwarden.net/nvd.nist.gov/icon.png",
+  exploitdb:   "https://icons.bitwarden.net/exploit-db.com/icon.png",
+  flathub:     "https://icons.bitwarden.net/flathub.org/icon.png",
+  homebrew:    "https://icons.bitwarden.net/brew.sh/icon.png",
+  ollama:      "https://icons.bitwarden.net/ollama.com/icon.png",
+  huggingface: "https://icons.bitwarden.net/huggingface.co/icon.png",
 };
 
 function SourcePicker({ options, value, onChange }: {
@@ -60,10 +69,13 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [engine, setEngine] = useState("ddg");
   const [source, setSource] = useState("github");
+  const [appsSource, setAppsSource] = useState("flathub");
   const [torrentSource, setTorrentSource] = useState("piratebay");
   const [academicSource, setAcademicSource] = useState("openalex");
+  const [vulnSource, setVulnSource] = useState("nvd");
+  const [mlSource, setMlSource] = useState("ollama");
   const [page, setPage] = useState(1);
-  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper)[]>([]);
+  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper | CVE | Exploit | AppType | ModelType)[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -76,7 +88,7 @@ export default function App() {
   const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
 
   const fetch = async (pageNum: number, append: boolean) => {
-    const src = tab === "software" ? source : tab === "academic" ? academicSource : torrentSource;
+    const src = tab === "software" ? source : tab === "academic" ? academicSource : tab === "vuln" ? vulnSource : tab === "apps" ? appsSource : tab === "ml" ? mlSource : torrentSource;
     const data = await doSearch(tab, query.trim(), engine, src, pageNum);
     setResults(prev => append ? [...prev, ...(data ?? [])] : (data ?? []));
     return data;
@@ -169,11 +181,20 @@ export default function App() {
           {tab === "software" && (
             <SourcePicker options={["github","gitlab","sourceforge"]} value={source} onChange={setSource} />
           )}
+          {tab === "apps" && (
+            <SourcePicker options={["flathub","homebrew"]} value={appsSource} onChange={setAppsSource} />
+          )}
           {tab === "torrents" && (
             <SourcePicker options={["piratebay","nyaa"]} value={torrentSource} onChange={setTorrentSource} />
           )}
           {tab === "academic" && (
             <SourcePicker options={["openalex","nasa"]} value={academicSource} onChange={setAcademicSource} />
+          )}
+          {tab === "vuln" && (
+            <SourcePicker options={["nvd","exploitdb"]} value={vulnSource} onChange={setVulnSource} />
+          )}
+          {tab === "ml" && (
+            <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />
           )}
         </div>
       </header>
@@ -195,8 +216,12 @@ export default function App() {
         <div className="results">
           {tab === "web" && (results as WebResult[]).map((r, i) => <WebResultCard key={i} r={r} />)}
           {tab === "software" && (results as Repository[]).map((r, i) => <RepoCard key={i} r={r} />)}
+          {tab === "apps" && (results as AppType[]).map((r, i) => <AppCard key={i} r={r} />)}
           {tab === "torrents" && (results as (Torrent | NyaaTorrent)[]).map((r, i) => <TorrentCard key={i} r={r} />)}
           {tab === "academic" && (results as Paper[]).map((r, i) => <PaperCard key={i} r={r} />)}
+          {tab === "vuln" && vulnSource === "nvd" && (results as CVE[]).map((r, i) => <CVECard key={i} r={r} />)}
+          {tab === "vuln" && vulnSource === "exploitdb" && (results as Exploit[]).map((r, i) => <ExploitCard key={i} r={r} />)}
+          {tab === "ml" && (results as ModelType[]).map((r, i) => <ModelCard key={i} r={r} />)}
         </div>
 
         {hasResults && canLoadMore && (
