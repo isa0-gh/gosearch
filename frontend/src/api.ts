@@ -1,6 +1,12 @@
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App } from "./types";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model } from "./types";
 
 const BASE = "/api/v1";
+
+export async function searchML(q: string, source: string, pages: number): Promise<Model[]> {
+  const res = await fetch(`${BASE}/ml?q=${encodeURIComponent(q)}&source=${source}&pages=${pages}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
 export async function searchApps(q: string, source: string, pages: number): Promise<App[]> {
   const res = await fetch(`${BASE}/apps?q=${encodeURIComponent(q)}&source=${source}&pages=${pages}`);
@@ -44,5 +50,6 @@ export function doSearch(tab: Tab, q: string, engine: string, source: string, pa
   if (tab === "academic") return searchAcademic(q, source, pages);
   if (tab === "vuln") return searchVuln(q, source, pages);
   if (tab === "apps") return searchApps(q, source, pages);
+  if (tab === "ml") return searchML(q, source, pages);
   return searchTorrents(q, source, pages);
 }
