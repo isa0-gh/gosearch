@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Star, Globe, Download, Magnet } from "lucide-react";
-import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit } from "../types";
+import { Star, Globe, Download, Magnet, Package } from "lucide-react";
+import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App } from "../types";
 
 function favicon(url: string) {
   try {
@@ -140,3 +140,24 @@ export function ExploitCard({ r }: { r: Exploit }) {
     </div>
   );
 }
+
+export function AppCard({ r }: { r: App }) {
+  const { t } = useTranslation();
+  return (
+    <div className="result-item">
+      <div className="result-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {r.Icon ? (
+           <img src={r.Icon} alt="" width={24} height={24} onError={e => e.currentTarget.style.display='none'} />
+        ) : <Package size={20} />}
+        <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Name}</a>
+      </div>
+      {r.Summary && <div className="result-desc">{r.Summary}</div>}
+      <div className="result-meta">
+        {r.Developer && <span>{r.Developer}</span>}
+        {r.License && <span className="meta-pill">{r.License}</span>}
+        {r.UpdatedAt > 0 && <span>{t("fields.updated")} {new Date(r.UpdatedAt * 1000).toLocaleDateString()}</span>}
+      </div>
+    </div>
+  );
+}
+
