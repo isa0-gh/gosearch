@@ -209,6 +209,36 @@ header {
   padding: 5px 10px;
 }
 
+.source-picker {
+  display: flex;
+  gap: 4px;
+}
+
+.source-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s, border-color 0.15s;
+  padding: 0;
+}
+
+.source-icon-btn:hover {
+  opacity: 0.8;
+}
+
+.source-icon-btn.active {
+  opacity: 1;
+  border-color: var(--border);
+  background: var(--bg);
+}
+
 .filter-group label {
   font-size: 12px;
   color: var(--muted);
