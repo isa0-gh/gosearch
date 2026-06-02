@@ -12,6 +12,48 @@ const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "academic", icon: <BookOpen size={14} /> },
 ];
 
+const SOURCE_ICONS: Record<string, string> = {
+  ddg:         "https://icons.bitwarden.net/duckduckgo.com/icon.png",
+  bing:        "https://icons.bitwarden.net/bing.com/icon.png",
+  brave:       "https://icons.bitwarden.net/search.brave.com/icon.png",
+  github:      "https://icons.bitwarden.net/github.com/icon.png",
+  gitlab:      "https://icons.bitwarden.net/gitlab.com/icon.png",
+  sourceforge: "https://icons.bitwarden.net/sourceforge.net/icon.png",
+  piratebay:   "https://icons.bitwarden.net/thepiratebay.org/icon.png",
+  nyaa:        "https://icons.bitwarden.net/nyaa.si/icon.png",
+  openalex:    "https://icons.bitwarden.net/openalex.org/icon.png",
+  nasa:        "https://icons.bitwarden.net/nasa.gov/icon.png",
+};
+
+function SourcePicker({ options, value, onChange }: {
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="filter-group">
+      <div className="source-picker">
+        {options.map(opt => (
+          <button
+            key={opt}
+            title={opt}
+            className={`source-icon-btn ${value === opt ? "active" : ""}`}
+            onClick={() => onChange(opt)}
+          >
+            <img
+              src={SOURCE_ICONS[opt]}
+              alt={opt}
+              width={18}
+              height={18}
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<Tab>("web");
@@ -122,42 +164,16 @@ export default function App() {
 
         <div className="filters">
           {tab === "web" && (
-            <div className="filter-group">
-              <label>{t("engine")}</label>
-              <select value={engine} onChange={e => setEngine(e.target.value)}>
-                <option value="ddg">DuckDuckGo</option>
-                <option value="bing">Bing</option>
-                <option value="brave">Brave</option>
-              </select>
-            </div>
+            <SourcePicker options={["ddg","bing","brave"]} value={engine} onChange={setEngine} />
           )}
           {tab === "software" && (
-            <div className="filter-group">
-              <label>{t("source")}</label>
-              <select value={source} onChange={e => setSource(e.target.value)}>
-                <option value="github">GitHub</option>
-                <option value="gitlab">GitLab</option>
-                <option value="sourceforge">SourceForge</option>
-              </select>
-            </div>
+            <SourcePicker options={["github","gitlab","sourceforge"]} value={source} onChange={setSource} />
           )}
           {tab === "torrents" && (
-            <div className="filter-group">
-              <label>{t("source")}</label>
-              <select value={torrentSource} onChange={e => setTorrentSource(e.target.value)}>
-                <option value="piratebay">Pirate Bay</option>
-                <option value="nyaa">Nyaa</option>
-              </select>
-            </div>
+            <SourcePicker options={["piratebay","nyaa"]} value={torrentSource} onChange={setTorrentSource} />
           )}
           {tab === "academic" && (
-            <div className="filter-group">
-              <label>{t("source")}</label>
-              <select value={academicSource} onChange={e => setAcademicSource(e.target.value)}>
-                <option value="openalex">OpenAlex</option>
-                <option value="nasa">NASA NTRS</option>
-              </select>
-            </div>
+            <SourcePicker options={["openalex","nasa"]} value={academicSource} onChange={setAcademicSource} />
           )}
         </div>
       </header>
