@@ -1,4 +1,12 @@
-export type Tab = "web" | "software" | "torrents";
+export type Tab = "web" | "software" | "torrents" | "academic";
+
+export interface Paper {
+  Title: string;
+  URL: string;
+  Authors: string;
+  Abstract: string;
+  Type: string;
+}
 
 export interface WebResult {
   Title: string;
