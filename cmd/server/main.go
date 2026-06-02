@@ -9,6 +9,7 @@ import (
 
 	"github.com/isa0-gh/gosearch/internal/academic"
 	"github.com/isa0-gh/gosearch/internal/apps"
+	"github.com/isa0-gh/gosearch/internal/ml"
 	"github.com/isa0-gh/gosearch/internal/scrapers"
 	"github.com/isa0-gh/gosearch/internal/software"
 	"github.com/isa0-gh/gosearch/internal/torrents"
@@ -197,6 +198,30 @@ func handleApps(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, results)
 }
 
+// GET /api/v1/ml?q=...&source=ollama&pages=1
+func handleML(w http.ResponseWriter, r *http.Request) {
+	q := queryParam(r, "q")
+	if q == "" {
+		writeError(w, "q is required", http.StatusBadRequest)
+		return
+	}
+	pages := pagesParam(r)
+
+	var results []ml.Model
+	var err error
+
+	switch queryParam(r, "source") {
+	default: // ollama
+		results, err = ml.OllamaSearch(q, pages)
+	}
+
+	if err != nil {
+		writeError(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	writeJSON(w, results)
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/web", handleWeb)
@@ -205,6 +230,7 @@ func main() {
 	mux.HandleFunc("/api/v1/academic", handleAcademic)
 	mux.HandleFunc("/api/v1/vuln", handleVuln)
 	mux.HandleFunc("/api/v1/apps", handleApps)
+	mux.HandleFunc("/api/v1/ml", handleML)
 
 	port := os.Getenv("GOSEARCH_BACKEND_PORT")
 	if port == "" {
