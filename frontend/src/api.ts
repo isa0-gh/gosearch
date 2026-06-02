@@ -1,4 +1,4 @@
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent } from "./types";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper } from "./types";
 
 const BASE = "/api/v1";
 
@@ -20,8 +20,15 @@ export async function searchTorrents(q: string, source: string, pages: number): 
   return res.json();
 }
 
+export async function searchAcademic(q: string, source: string, pages: number): Promise<Paper[]> {
+  const res = await fetch(`${BASE}/academic?q=${encodeURIComponent(q)}&source=${source}&pages=${pages}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export function doSearch(tab: Tab, q: string, engine: string, source: string, pages: number) {
   if (tab === "web") return searchWeb(q, engine, pages);
   if (tab === "software") return searchSoftware(q, source, pages);
+  if (tab === "academic") return searchAcademic(q, source, pages);
   return searchTorrents(q, source, pages);
 }
