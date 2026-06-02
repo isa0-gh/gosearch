@@ -1,4 +1,24 @@
-export type Tab = "web" | "software" | "torrents" | "academic";
+export type Tab = "web" | "software" | "torrents" | "academic" | "vuln";
+
+export interface CVE {
+  ID: string;
+  Description: string;
+  Published: string;
+  Severity: string;
+  Score: number;
+  URL: string;
+}
+
+export interface Exploit {
+  ID: string;
+  Title: string;
+  Type: string;
+  Platform: string;
+  Author: string;
+  Published: string;
+  CVEs: string[];
+  URL: string;
+}
 
 export interface Paper {
   Title: string;
