@@ -112,6 +112,40 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
+  /academic:
+    get:
+      summary: Academic paper search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [openalex, nasa]
+            default: openalex
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Academic paper results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Paper"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
 components:
   schemas:
     WebResult:
@@ -195,6 +229,21 @@ components:
       type: object
       properties:
         error:
+          type: string
+
+    Paper:
+      type: object
+      properties:
+        Title:
+          type: string
+        URL:
+          type: string
+          format: uri
+        Authors:
+          type: string
+        Abstract:
+          type: string
+        Type:
           type: string
 
   responses:
