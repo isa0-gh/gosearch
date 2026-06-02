@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Star, Globe, Download, Magnet } from "lucide-react";
-import type { WebResult, Repository, Torrent, NyaaTorrent, Paper } from "../types";
+import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit } from "../types";
 
 function favicon(url: string) {
   try {
@@ -96,6 +96,47 @@ export function PaperCard({ r }: { r: Paper }) {
       {r.Authors && <div className="result-url">{r.Authors}</div>}
       {r.Abstract && <div className="result-snippet">{r.Abstract}</div>}
       {r.Type && <div className="result-meta"><span className="meta-pill">{r.Type}</span></div>}
+    </div>
+  );
+}
+
+const SEVERITY_COLOR: Record<string, string> = {
+  CRITICAL: "#d32f2f",
+  HIGH:     "#e64a19",
+  MEDIUM:   "#f57c00",
+  LOW:      "#388e3c",
+};
+
+export function CVECard({ r }: { r: CVE }) {
+  const color = SEVERITY_COLOR[r.Severity?.toUpperCase()] ?? "var(--muted)";
+  return (
+    <div className="result-item">
+      <div className="result-title">
+        <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.ID}</a>
+      </div>
+      {r.Description && <div className="result-snippet">{r.Description}</div>}
+      <div className="result-meta">
+        {r.Severity && <span className="meta-pill" style={{ color, borderColor: color }}>{r.Severity}</span>}
+        {r.Score > 0 && <span>CVSS {r.Score.toFixed(1)}</span>}
+        {r.Published && <span>{r.Published.slice(0, 10)}</span>}
+      </div>
+    </div>
+  );
+}
+
+export function ExploitCard({ r }: { r: Exploit }) {
+  return (
+    <div className="result-item">
+      <div className="result-title">
+        <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+      </div>
+      <div className="result-meta">
+        {r.Type && <span className="meta-pill">{r.Type}</span>}
+        {r.Platform && <span className="meta-pill">{r.Platform}</span>}
+        {r.Author && <span>{r.Author}</span>}
+        {r.Published && <span>{r.Published}</span>}
+        {r.CVEs?.map(c => <span key={c} className="meta-pill">{c}</span>)}
+      </div>
     </div>
   );
 }
