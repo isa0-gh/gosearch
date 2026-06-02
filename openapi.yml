@@ -146,6 +146,42 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
+  /vuln:
+    get:
+      summary: Vulnerability search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [nvd, exploitdb]
+            default: nvd
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Vulnerability results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: "#/components/schemas/CVE"
+                    - $ref: "#/components/schemas/Exploit"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
 components:
   schemas:
     WebResult:
@@ -245,6 +281,49 @@ components:
           type: string
         Type:
           type: string
+
+    CVE:
+      type: object
+      properties:
+        ID:
+          type: string
+        Description:
+          type: string
+        Published:
+          type: string
+          format: date-time
+        Severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        Score:
+          type: number
+        URL:
+          type: string
+          format: uri
+
+    Exploit:
+      type: object
+      properties:
+        ID:
+          type: string
+        Title:
+          type: string
+        Type:
+          type: string
+        Platform:
+          type: string
+        Author:
+          type: string
+        Published:
+          type: string
+          format: date
+        CVEs:
+          type: array
+          items:
+            type: string
+        URL:
+          type: string
+          format: uri
 
   responses:
     BadRequest:
