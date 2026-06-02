@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/isa0-gh/gosearch/internal/academic"
 	"github.com/isa0-gh/gosearch/internal/scrapers"
 	"github.com/isa0-gh/gosearch/internal/software"
 	"github.com/isa0-gh/gosearch/internal/torrents"
@@ -115,11 +116,38 @@ func handleTorrents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GET /api/v1/academic?q=...&source=nasa|openalex&pages=1
+func handleAcademic(w http.ResponseWriter, r *http.Request) {
+	q := queryParam(r, "q")
+	if q == "" {
+		writeError(w, "q is required", http.StatusBadRequest)
+		return
+	}
+	pages := pagesParam(r)
+
+	var results []academic.Paper
+	var err error
+
+	switch queryParam(r, "source") {
+	case "nasa":
+		results, err = academic.NASASearch(q, pages)
+	default: // openalex
+		results, err = academic.OpenAlexSearch(q, pages)
+	}
+
+	if err != nil {
+		writeError(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	writeJSON(w, results)
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/web", handleWeb)
 	mux.HandleFunc("/api/v1/software", handleSoftware)
 	mux.HandleFunc("/api/v1/torrents", handleTorrents)
+	mux.HandleFunc("/api/v1/academic", handleAcademic)
 
 	port := os.Getenv("GOSEARCH_BACKEND_PORT")
 	if port == "" {
