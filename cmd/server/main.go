@@ -211,6 +211,8 @@ func handleML(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	switch queryParam(r, "source") {
+	case "huggingface":
+		results, err = ml.HuggingFaceSearch(q, pages)
 	default: // ollama
 		results, err = ml.OllamaSearch(q, pages)
 	}
