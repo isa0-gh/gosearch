@@ -182,8 +182,65 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
+  /apps:
+    get:
+      summary: Application search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [flathub, homebrew]
+            default: flathub
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Application results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/App"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
 components:
   schemas:
+    App:
+      type: object
+      properties:
+        AppID:
+          type: string
+        Name:
+          type: string
+        Summary:
+          type: string
+        Developer:
+          type: string
+        License:
+          type: string
+        Icon:
+          type: string
+          format: uri
+        URL:
+          type: string
+          format: uri
+        UpdatedAt:
+          type: integer
+          description: Unix timestamp
+
     WebResult:
       type: object
       properties:
