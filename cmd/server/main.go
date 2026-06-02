@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/isa0-gh/gosearch/internal/academic"
+	"github.com/isa0-gh/gosearch/internal/apps"
 	"github.com/isa0-gh/gosearch/internal/scrapers"
 	"github.com/isa0-gh/gosearch/internal/software"
 	"github.com/isa0-gh/gosearch/internal/torrents"
@@ -170,6 +171,32 @@ func handleVuln(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GET /api/v1/apps?q=...&source=flathub|homebrew&pages=1
+func handleApps(w http.ResponseWriter, r *http.Request) {
+	q := queryParam(r, "q")
+	if q == "" {
+		writeError(w, "q is required", http.StatusBadRequest)
+		return
+	}
+	pages := pagesParam(r)
+
+	var results []apps.App
+	var err error
+
+	switch queryParam(r, "source") {
+	case "homebrew":
+		results, err = apps.HomebrewSearch(q, pages)
+	default: // flathub
+		results, err = apps.FlathubSearch(q, pages)
+	}
+
+	if err != nil {
+		writeError(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	writeJSON(w, results)
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/web", handleWeb)
@@ -177,6 +204,7 @@ func main() {
 	mux.HandleFunc("/api/v1/torrents", handleTorrents)
 	mux.HandleFunc("/api/v1/academic", handleAcademic)
 	mux.HandleFunc("/api/v1/vuln", handleVuln)
+	mux.HandleFunc("/api/v1/apps", handleApps)
 
 	port := os.Getenv("GOSEARCH_BACKEND_PORT")
 	if port == "" {
