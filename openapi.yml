@@ -216,6 +216,40 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
+  /ml:
+    get:
+      summary: LLM/ML model search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [ollama]
+            default: ollama
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Model results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Model"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
 components:
   schemas:
     App:
@@ -381,6 +415,29 @@ components:
         URL:
           type: string
           format: uri
+
+    Model:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        description:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        pulls:
+          type: string
+        tags:
+          type: string
+        size:
+          type: string
+        updated:
+          type: string
 
   responses:
     BadRequest:
