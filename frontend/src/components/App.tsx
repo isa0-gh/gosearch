@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Globe, Code, Download, Moon, Sun, ChevronRight } from "lucide-react";
+import { Search, Globe, Code, Download, BookOpen, Moon, Sun, ChevronRight } from "lucide-react";
 import { doSearch } from "../api";
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent } from "../types";
-import { WebResultCard, RepoCard, TorrentCard } from "./ResultCards";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper } from "../types";
+import { WebResultCard, RepoCard, TorrentCard, PaperCard } from "./ResultCards";
 
 const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "web", icon: <Globe size={14} /> },
   { id: "software", icon: <Code size={14} /> },
   { id: "torrents", icon: <Download size={14} /> },
+  { id: "academic", icon: <BookOpen size={14} /> },
 ];
 
 export default function App() {
@@ -18,8 +19,9 @@ export default function App() {
   const [engine, setEngine] = useState("ddg");
   const [source, setSource] = useState("github");
   const [torrentSource, setTorrentSource] = useState("piratebay");
+  const [academicSource, setAcademicSource] = useState("openalex");
   const [page, setPage] = useState(1);
-  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent)[]>([]);
+  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper)[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -32,7 +34,7 @@ export default function App() {
   const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
 
   const fetch = async (pageNum: number, append: boolean) => {
-    const src = tab === "software" ? source : torrentSource;
+    const src = tab === "software" ? source : tab === "academic" ? academicSource : torrentSource;
     const data = await doSearch(tab, query.trim(), engine, src, pageNum);
     setResults(prev => append ? [...prev, ...(data ?? [])] : (data ?? []));
     return data;
@@ -148,6 +150,15 @@ export default function App() {
               </select>
             </div>
           )}
+          {tab === "academic" && (
+            <div className="filter-group">
+              <label>{t("source")}</label>
+              <select value={academicSource} onChange={e => setAcademicSource(e.target.value)}>
+                <option value="openalex">OpenAlex</option>
+                <option value="nasa">NASA NTRS</option>
+              </select>
+            </div>
+          )}
         </div>
       </header>
 
@@ -169,6 +180,7 @@ export default function App() {
           {tab === "web" && (results as WebResult[]).map((r, i) => <WebResultCard key={i} r={r} />)}
           {tab === "software" && (results as Repository[]).map((r, i) => <RepoCard key={i} r={r} />)}
           {tab === "torrents" && (results as (Torrent | NyaaTorrent)[]).map((r, i) => <TorrentCard key={i} r={r} />)}
+          {tab === "academic" && (results as Paper[]).map((r, i) => <PaperCard key={i} r={r} />)}
         </div>
 
         {hasResults && canLoadMore && (
