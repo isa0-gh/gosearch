@@ -1,4 +1,15 @@
-export type Tab = "web" | "software" | "torrents" | "academic" | "vuln";
+export type Tab = "web" | "software" | "torrents" | "academic" | "vuln" | "apps";
+
+export interface App {
+  AppID: string;
+  Name: string;
+  Summary: string;
+  Developer: string;
+  License: string;
+  Icon: string;
+  URL: string;
+  UpdatedAt: number;
+}
 
 export interface CVE {
   ID: string;
