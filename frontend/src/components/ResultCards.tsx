@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Star, Globe, Download, Magnet, Package, Copy, Check } from "lucide-react";
 import { useState } from "react";
-import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App } from "../types";
+import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model } from "../types";
 
 function favicon(url: string) {
   try {
@@ -193,6 +193,78 @@ export function AppCard({ r }: { r: App }) {
         {r.Developer && <span>{r.Developer}</span>}
         {r.License && <span className="meta-pill">{r.License}</span>}
         {r.UpdatedAt > 0 && <span>{t("fields.updated")} {new Date(r.UpdatedAt * 1000).toLocaleDateString()}</span>}
+      </div>
+    </div>
+  );
+}
+
+export function ModelCard({ r }: { r: Model }) {
+  const { t } = useTranslation();
+  return (
+    <div className="result-item">
+      <div className="result-title">
+        <a href={r.url} target="_blank" rel="noopener noreferrer">{r.name}</a>
+      </div>
+      {r.description && <div className="result-desc">{r.description}</div>}
+      {r.capabilities && r.capabilities.length > 0 && (
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px", marginBottom: "6px" }}>
+          {r.capabilities.map((cap) => {
+            let bg = "var(--bg-secondary)";
+            let fg = "var(--text-secondary)";
+            if (cap === "vision") {
+              bg = "rgba(139, 92, 246, 0.1)";
+              fg = "rgb(139, 92, 246)";
+            } else if (cap === "tools") {
+              bg = "rgba(16, 185, 129, 0.1)";
+              fg = "rgb(16, 185, 129)";
+            } else if (cap === "thinking") {
+              bg = "rgba(59, 130, 246, 0.1)";
+              fg = "rgb(59, 130, 246)";
+            } else if (cap === "cloud") {
+              bg = "rgba(6, 182, 212, 0.1)";
+              fg = "rgb(6, 182, 212)";
+            }
+            return (
+              <span
+                key={cap}
+                className="meta-pill"
+                style={{
+                  backgroundColor: bg,
+                  color: fg,
+                  borderColor: fg,
+                  fontSize: "11px",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                  fontWeight: 500,
+                }}
+              >
+                {cap}
+              </span>
+            );
+          })}
+        </div>
+      )}
+      <div className="result-meta">
+        {r.pulls && (
+          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <Download size={11} /> {r.pulls} {t("fields.pulls", "Pulls")}
+          </span>
+        )}
+        {r.tags && (
+          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <Package size={11} /> {r.tags} {t("fields.tags", "Tags")}
+          </span>
+        )}
+        {r.size && (
+          <span className="meta-pill" style={{ color: "var(--text-primary)", borderColor: "var(--border)" }}>
+            {r.size}
+          </span>
+        )}
+        {r.updated && (
+          <span>
+            {t("fields.updated")}: {r.updated}
+          </span>
+        )}
       </div>
     </div>
   );
