@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Star, Globe, Download, Magnet, Package } from "lucide-react";
+import { Star, Globe, Download, Magnet, Package, Copy, Check } from "lucide-react";
+import { useState } from "react";
 import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App } from "../types";
 
 function favicon(url: string) {
@@ -143,13 +144,49 @@ export function ExploitCard({ r }: { r: Exploit }) {
 
 export function AppCard({ r }: { r: App }) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const isHomebrew = r.URL.includes("formulae.brew.sh");
+  const isCask = r.Developer === "Homebrew Cask";
+  const installCmd = isHomebrew
+    ? `brew install ${isCask ? "--cask " : ""}${r.AppID}`
+    : `flatpak install flathub ${r.AppID}`;
+
+  const copy = () => {
+    navigator.clipboard.writeText(installCmd);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="result-item">
-      <div className="result-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {r.Icon ? (
-           <img src={r.Icon} alt="" width={24} height={24} onError={e => e.currentTarget.style.display='none'} />
-        ) : <Package size={20} />}
-        <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Name}</a>
+      <div className="result-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {r.Icon ? (
+             <img src={r.Icon} alt="" width={24} height={24} onError={e => e.currentTarget.style.display='none'} />
+          ) : <Package size={20} />}
+          <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Name}</a>
+        </div>
+        <button 
+          className="copy-command-btn" 
+          onClick={copy} 
+          title={installCmd}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px', 
+            fontSize: '11px', 
+            padding: '4px 8px',
+            borderRadius: '4px',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer'
+          }}
+        >
+          {copied ? <Check size={12} color="#4caf50" /> : <Copy size={12} />}
+          <code>{installCmd}</code>
+        </button>
       </div>
       {r.Summary && <div className="result-desc">{r.Summary}</div>}
       <div className="result-meta">
@@ -160,4 +197,5 @@ export function AppCard({ r }: { r: App }) {
     </div>
   );
 }
+
 
