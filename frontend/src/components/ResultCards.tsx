@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Star, Globe, Download, Magnet } from "lucide-react";
-import type { WebResult, Repository, Torrent, NyaaTorrent } from "../types";
+import type { WebResult, Repository, Torrent, NyaaTorrent, Paper } from "../types";
 
 function favicon(url: string) {
   try {
@@ -81,6 +81,21 @@ export function TorrentCard({ r }: { r: Torrent | NyaaTorrent }) {
           <Magnet size={11} /> magnet
         </a>
       )}
+    </div>
+  );
+}
+
+export function PaperCard({ r }: { r: Paper }) {
+  return (
+    <div className="result-item">
+      <div className="result-title">
+        {r.URL
+          ? <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+          : r.Title}
+      </div>
+      {r.Authors && <div className="result-url">{r.Authors}</div>}
+      {r.Abstract && <div className="result-snippet">{r.Abstract}</div>}
+      {r.Type && <div className="result-meta"><span className="meta-pill">{r.Type}</span></div>}
     </div>
   );
 }
