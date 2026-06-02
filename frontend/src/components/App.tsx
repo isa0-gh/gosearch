@@ -31,6 +31,7 @@ const SOURCE_ICONS: Record<string, string> = {
   flathub:     "https://icons.bitwarden.net/flathub.org/icon.png",
   homebrew:    "https://icons.bitwarden.net/brew.sh/icon.png",
   ollama:      "https://icons.bitwarden.net/ollama.com/icon.png",
+  huggingface: "https://icons.bitwarden.net/huggingface.co/icon.png",
 };
 
 function SourcePicker({ options, value, onChange }: {
@@ -193,7 +194,7 @@ export default function App() {
             <SourcePicker options={["nvd","exploitdb"]} value={vulnSource} onChange={setVulnSource} />
           )}
           {tab === "ml" && (
-            <SourcePicker options={["ollama"]} value={mlSource} onChange={setMlSource} />
+            <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />
           )}
         </div>
       </header>
