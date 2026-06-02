@@ -11,6 +11,7 @@ import (
 	"github.com/isa0-gh/gosearch/internal/scrapers"
 	"github.com/isa0-gh/gosearch/internal/software"
 	"github.com/isa0-gh/gosearch/internal/torrents"
+	"github.com/isa0-gh/gosearch/internal/vuln"
 )
 
 func writeJSON(w http.ResponseWriter, data any) {
@@ -142,12 +143,40 @@ func handleAcademic(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, results)
 }
 
+// GET /api/v1/vuln?q=...&source=nvd|exploitdb&pages=1
+func handleVuln(w http.ResponseWriter, r *http.Request) {
+	q := queryParam(r, "q")
+	if q == "" {
+		writeError(w, "q is required", http.StatusBadRequest)
+		return
+	}
+	pages := pagesParam(r)
+
+	switch queryParam(r, "source") {
+	case "exploitdb":
+		results, err := vuln.ExploitDBSearch(q, pages)
+		if err != nil {
+			writeError(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, results)
+	default: // nvd
+		results, err := vuln.NVDSearch(q, pages)
+		if err != nil {
+			writeError(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, results)
+	}
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/web", handleWeb)
 	mux.HandleFunc("/api/v1/software", handleSoftware)
 	mux.HandleFunc("/api/v1/torrents", handleTorrents)
 	mux.HandleFunc("/api/v1/academic", handleAcademic)
+	mux.HandleFunc("/api/v1/vuln", handleVuln)
 
 	port := os.Getenv("GOSEARCH_BACKEND_PORT")
 	if port == "" {
