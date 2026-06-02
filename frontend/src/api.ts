@@ -1,4 +1,4 @@
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper } from "./types";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit } from "./types";
 
 const BASE = "/api/v1";
 
@@ -26,9 +26,16 @@ export async function searchAcademic(q: string, source: string, pages: number): 
   return res.json();
 }
 
+export async function searchVuln(q: string, source: string, pages: number): Promise<(CVE | Exploit)[]> {
+  const res = await fetch(`${BASE}/vuln?q=${encodeURIComponent(q)}&source=${source}&pages=${pages}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export function doSearch(tab: Tab, q: string, engine: string, source: string, pages: number) {
   if (tab === "web") return searchWeb(q, engine, pages);
   if (tab === "software") return searchSoftware(q, source, pages);
   if (tab === "academic") return searchAcademic(q, source, pages);
+  if (tab === "vuln") return searchVuln(q, source, pages);
   return searchTorrents(q, source, pages);
 }
