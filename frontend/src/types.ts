@@ -1,4 +1,15 @@
-export type Tab = "web" | "software" | "torrents" | "academic" | "vuln" | "apps";
+export type Tab = "web" | "software" | "torrents" | "academic" | "vuln" | "apps" | "ml";
+
+export interface Model {
+  name: string;
+  url: string;
+  description: string;
+  capabilities: string[];
+  pulls: string;
+  tags: string;
+  size: string;
+  updated: string;
+}
 
 export interface App {
   AppID: string;
