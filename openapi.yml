@@ -229,7 +229,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [ollama]
+            enum: [ollama, huggingface]
             default: ollama
         - name: pages
           in: query
