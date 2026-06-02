@@ -1,0 +1,212 @@
+openapi: 3.1.0
+info:
+  title: gosearch
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+
+paths:
+  /web:
+    get:
+      summary: Web search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: engine
+          in: query
+          schema:
+            type: string
+            enum: [ddg, bing, brave]
+            default: ddg
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WebResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /software:
+    get:
+      summary: Software / repository search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [github, gitlab, sourceforge]
+            default: github
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Repository results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repository"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /torrents:
+    get:
+      summary: Torrent search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [piratebay, nyaa]
+            default: piratebay
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: Used by nyaa only
+      responses:
+        "200":
+          description: Torrent results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: "#/components/schemas/Torrent"
+                    - $ref: "#/components/schemas/NyaaTorrent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+components:
+  schemas:
+    WebResult:
+      type: object
+      properties:
+        Title:
+          type: string
+        URL:
+          type: string
+          format: uri
+        Snippet:
+          type: string
+
+    Repository:
+      type: object
+      properties:
+        Name:
+          type: string
+        URL:
+          type: string
+          format: uri
+        Description:
+          type: string
+        Stars:
+          type: integer
+        Language:
+          type: string
+        UpdatedAt:
+          type: string
+          format: date-time
+
+    Torrent:
+      type: object
+      properties:
+        Name:
+          type: string
+        InfoHash:
+          type: string
+        MagnetURL:
+          type: string
+        Seeders:
+          type: integer
+        Leechers:
+          type: integer
+        Size:
+          type: integer
+          description: Size in bytes
+        AddedAt:
+          type: string
+          format: date-time
+        Category:
+          type: string
+        Uploader:
+          type: string
+
+    NyaaTorrent:
+      type: object
+      properties:
+        Name:
+          type: string
+        URL:
+          type: string
+          format: uri
+        MagnetURL:
+          type: string
+        Size:
+          type: string
+        Category:
+          type: string
+        Seeders:
+          type: integer
+        Leechers:
+          type: integer
+        Downloads:
+          type: integer
+        AddedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Missing required parameter
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadGateway:
+      description: Upstream source error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
