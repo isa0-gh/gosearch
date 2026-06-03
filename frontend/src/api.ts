@@ -1,4 +1,4 @@
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model, Game } from "./types";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model, Game, ItchGame } from "./types";
 
 const BASE = "/api/v1";
 
@@ -44,8 +44,8 @@ export async function searchVuln(q: string, source: string, pages: number): Prom
   return res.json();
 }
 
-export async function searchGames(q: string, pages: number): Promise<Game[]> {
-  const res = await fetch(`${BASE}/games?q=${encodeURIComponent(q)}&source=steam&pages=${pages}`);
+export async function searchGames(q: string, source: string, pages: number): Promise<(Game | ItchGame)[]> {
+  const res = await fetch(`${BASE}/games?q=${encodeURIComponent(q)}&source=${source}&pages=${pages}`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -57,6 +57,6 @@ export function doSearch(tab: Tab, q: string, engine: string, source: string, pa
   if (tab === "vuln") return searchVuln(q, source, pages);
   if (tab === "apps") return searchApps(q, source, pages);
   if (tab === "ml") return searchML(q, source, pages);
-  if (tab === "games") return searchGames(q, pages);
+  if (tab === "games") return searchGames(q, source, pages);
   return searchTorrents(q, source, pages);
 }
