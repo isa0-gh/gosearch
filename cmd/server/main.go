@@ -225,19 +225,31 @@ func handleML(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, results)
 }
 
-// GET /api/v1/games?q=...&source=steam&pages=1
+// GET /api/v1/games?q=...&source=steam|itchio&pages=1
 func handleGames(w http.ResponseWriter, r *http.Request) {
 	q := queryParam(r, "q")
 	if q == "" {
 		writeError(w, "q is required", http.StatusBadRequest)
 		return
 	}
-	results, err := games.SteamSearch(q, pagesParam(r))
-	if err != nil {
-		writeError(w, err.Error(), http.StatusBadGateway)
-		return
+	pages := pagesParam(r)
+
+	switch queryParam(r, "source") {
+	case "itchio":
+		results, err := games.ItchSearch(q, pages)
+		if err != nil {
+			writeError(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, results)
+	default: // steam
+		results, err := games.SteamSearch(q, pages)
+		if err != nil {
+			writeError(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, results)
 	}
-	writeJSON(w, results)
 }
 
 func main() {
