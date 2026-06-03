@@ -9,6 +9,7 @@ import (
 
 	"github.com/isa0-gh/gosearch/internal/academic"
 	"github.com/isa0-gh/gosearch/internal/apps"
+	"github.com/isa0-gh/gosearch/internal/games"
 	"github.com/isa0-gh/gosearch/internal/ml"
 	"github.com/isa0-gh/gosearch/internal/scrapers"
 	"github.com/isa0-gh/gosearch/internal/software"
@@ -224,6 +225,21 @@ func handleML(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, results)
 }
 
+// GET /api/v1/games?q=...&source=steam&pages=1
+func handleGames(w http.ResponseWriter, r *http.Request) {
+	q := queryParam(r, "q")
+	if q == "" {
+		writeError(w, "q is required", http.StatusBadRequest)
+		return
+	}
+	results, err := games.SteamSearch(q, pagesParam(r))
+	if err != nil {
+		writeError(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	writeJSON(w, results)
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/web", handleWeb)
@@ -233,6 +249,7 @@ func main() {
 	mux.HandleFunc("/api/v1/vuln", handleVuln)
 	mux.HandleFunc("/api/v1/apps", handleApps)
 	mux.HandleFunc("/api/v1/ml", handleML)
+	mux.HandleFunc("/api/v1/games", handleGames)
 
 	port := os.Getenv("GOSEARCH_BACKEND_PORT")
 	if port == "" {
