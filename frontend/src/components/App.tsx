@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Globe, Code, Download, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu, Gamepad2 } from "lucide-react";
 import { doSearch } from "../api";
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game } from "../types";
-import { WebResultCard, RepoCard, TorrentCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard } from "./ResultCards";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game, ItchGame } from "../types";
+import { WebResultCard, RepoCard, TorrentCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard, ItchGameCard } from "./ResultCards";
 
 const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "web", icon: <Globe size={14} /> },
@@ -32,6 +32,7 @@ const SOURCE_ICONS: Record<string, string> = {
   flathub:     "https://icons.bitwarden.net/flathub.org/icon.png",
   homebrew:    "https://icons.bitwarden.net/brew.sh/icon.png",
   steam:       "https://icons.bitwarden.net/store.steampowered.com/icon.png",
+  itchio:      "https://icons.bitwarden.net/itch.io/icon.png",
   huggingface: "https://icons.bitwarden.net/huggingface.co/icon.png",
 };
 
@@ -73,10 +74,11 @@ export default function App() {
   const [appsSource, setAppsSource] = useState("flathub");
   const [torrentSource, setTorrentSource] = useState("piratebay");
   const [academicSource, setAcademicSource] = useState("openalex");
+  const [gamesSource, setGamesSource] = useState("steam");
   const [vulnSource, setVulnSource] = useState("nvd");
   const [mlSource, setMlSource] = useState("ollama");
   const [page, setPage] = useState(1);
-  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper | CVE | Exploit | AppType | ModelType | Game)[]>([]);
+  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper | CVE | Exploit | AppType | ModelType | Game | ItchGame)[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -89,7 +91,7 @@ export default function App() {
   const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
 
   const fetch = async (pageNum: number, append: boolean) => {
-    const src = tab === "software" ? source : tab === "academic" ? academicSource : tab === "vuln" ? vulnSource : tab === "apps" ? appsSource : tab === "ml" ? mlSource : torrentSource;
+    const src = tab === "software" ? source : tab === "academic" ? academicSource : tab === "vuln" ? vulnSource : tab === "apps" ? appsSource : tab === "ml" ? mlSource : tab === "games" ? gamesSource : torrentSource;
     const data = await doSearch(tab, query.trim(), engine, src, pageNum);
     setResults(prev => append ? [...prev, ...(data ?? [])] : (data ?? []));
     return data;
@@ -197,7 +199,7 @@ export default function App() {
             <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />
           )}
           {tab === "games" && (
-            <SourcePicker options={["steam"]} value="steam" onChange={() => {}} />
+            <SourcePicker options={["steam", "itchio"]} value={gamesSource} onChange={setGamesSource} />
           )}
         </div>
       </header>
@@ -225,7 +227,8 @@ export default function App() {
           {tab === "vuln" && vulnSource === "nvd" && (results as CVE[]).map((r, i) => <CVECard key={i} r={r} />)}
           {tab === "vuln" && vulnSource === "exploitdb" && (results as Exploit[]).map((r, i) => <ExploitCard key={i} r={r} />)}
           {tab === "ml" && (results as ModelType[]).map((r, i) => <ModelCard key={i} r={r} />)}
-          {tab === "games" && (results as Game[]).map((r, i) => <GameCard key={i} r={r} />)}
+          {tab === "games" && gamesSource === "steam" && (results as Game[]).map((r, i) => <GameCard key={i} r={r} />)}
+          {tab === "games" && gamesSource === "itchio" && (results as ItchGame[]).map((r, i) => <ItchGameCard key={i} r={r} />)}
         </div>
 
         {hasResults && canLoadMore && (
