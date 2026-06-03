@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Globe, Code, Download, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu, Gamepad2 } from "lucide-react";
+import { Search, Globe, Code, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu, Gamepad2 } from "lucide-react";
 import { doSearch } from "../api";
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game, ItchGame } from "../types";
-import { WebResultCard, RepoCard, TorrentCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard, ItchGameCard } from "./ResultCards";
+import type { Tab, WebResult, Repository, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game, ItchGame } from "../types";
+import { WebResultCard, RepoCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard, ItchGameCard } from "./ResultCards";
 
 const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "web", icon: <Globe size={14} /> },
@@ -11,7 +11,6 @@ const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "apps", icon: <LayoutGrid size={14} /> },
   { id: "games", icon: <Gamepad2 size={14} /> },
   { id: "ml", icon: <Cpu size={14} /> },
-  { id: "torrents", icon: <Download size={14} /> },
   { id: "academic", icon: <BookOpen size={14} /> },
   { id: "vuln", icon: <ShieldAlert size={14} /> },
 ];
@@ -23,8 +22,6 @@ const SOURCE_ICONS: Record<string, string> = {
   github:      "https://icons.bitwarden.net/github.com/icon.png",
   gitlab:      "https://icons.bitwarden.net/gitlab.com/icon.png",
   sourceforge: "https://icons.bitwarden.net/sourceforge.net/icon.png",
-  piratebay:   "https://icons.bitwarden.net/thepiratebay.org/icon.png",
-  nyaa:        "https://icons.bitwarden.net/nyaa.si/icon.png",
   openalex:    "https://icons.bitwarden.net/openalex.org/icon.png",
   nasa:        "https://icons.bitwarden.net/nasa.gov/icon.png",
   nvd:         "https://icons.bitwarden.net/nvd.nist.gov/icon.png",
@@ -72,13 +69,12 @@ export default function App() {
   const [engine, setEngine] = useState("ddg");
   const [source, setSource] = useState("github");
   const [appsSource, setAppsSource] = useState("flathub");
-  const [torrentSource, setTorrentSource] = useState("piratebay");
   const [academicSource, setAcademicSource] = useState("openalex");
   const [gamesSource, setGamesSource] = useState("steam");
   const [vulnSource, setVulnSource] = useState("nvd");
   const [mlSource, setMlSource] = useState("ollama");
   const [page, setPage] = useState(1);
-  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper | CVE | Exploit | AppType | ModelType | Game | ItchGame)[]>([]);
+  const [results, setResults] = useState<(WebResult | Repository | Paper | CVE | Exploit | AppType | ModelType | Game | ItchGame)[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -91,7 +87,7 @@ export default function App() {
   const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
 
   const fetch = async (pageNum: number, append: boolean) => {
-    const src = tab === "software" ? source : tab === "academic" ? academicSource : tab === "vuln" ? vulnSource : tab === "apps" ? appsSource : tab === "ml" ? mlSource : tab === "games" ? gamesSource : torrentSource;
+    const src = tab === "software" ? source : tab === "academic" ? academicSource : tab === "vuln" ? vulnSource : tab === "apps" ? appsSource : tab === "ml" ? mlSource : tab === "games" ? gamesSource : source;
     const data = await doSearch(tab, query.trim(), engine, src, pageNum);
     setResults(prev => append ? [...prev, ...(data ?? [])] : (data ?? []));
     return data;
@@ -133,8 +129,6 @@ export default function App() {
   };
 
   const hasResults = results.length > 0;
-  // piratebay returns all results in one shot — no next page
-  const canLoadMore = tab !== "torrents" || torrentSource === "nyaa";
   return (
     <div className="container">
       <header>
@@ -186,9 +180,6 @@ export default function App() {
           {tab === "apps" && (
             <SourcePicker options={["flathub","homebrew"]} value={appsSource} onChange={setAppsSource} />
           )}
-          {tab === "torrents" && (
-            <SourcePicker options={["piratebay","nyaa"]} value={torrentSource} onChange={setTorrentSource} />
-          )}
           {tab === "academic" && (
             <SourcePicker options={["openalex","nasa"]} value={academicSource} onChange={setAcademicSource} />
           )}
@@ -222,7 +213,6 @@ export default function App() {
           {tab === "web" && (results as WebResult[]).map((r, i) => <WebResultCard key={i} r={r} />)}
           {tab === "software" && (results as Repository[]).map((r, i) => <RepoCard key={i} r={r} />)}
           {tab === "apps" && (results as AppType[]).map((r, i) => <AppCard key={i} r={r} />)}
-          {tab === "torrents" && (results as (Torrent | NyaaTorrent)[]).map((r, i) => <TorrentCard key={i} r={r} />)}
           {tab === "academic" && (results as Paper[]).map((r, i) => <PaperCard key={i} r={r} />)}
           {tab === "vuln" && vulnSource === "nvd" && (results as CVE[]).map((r, i) => <CVECard key={i} r={r} />)}
           {tab === "vuln" && vulnSource === "exploitdb" && (results as Exploit[]).map((r, i) => <ExploitCard key={i} r={r} />)}
@@ -231,7 +221,7 @@ export default function App() {
           {tab === "games" && gamesSource === "itchio" && (results as ItchGame[]).map((r, i) => <ItchGameCard key={i} r={r} />)}
         </div>
 
-        {hasResults && canLoadMore && (
+        {hasResults && (
           <footer className="load-more-footer">
             <button className="next-btn" onClick={loadMore} disabled={loadingMore}>
               {loadingMore
