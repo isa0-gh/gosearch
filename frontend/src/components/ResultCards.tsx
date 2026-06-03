@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Star, Globe, Download, Magnet, Package, Copy, Check } from "lucide-react";
-import { useState } from "react";
-import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model } from "../types";
+import { Star, Globe, Download, Magnet, Package, Copy, Check, Monitor, Apple, Terminal } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model, Game } from "../types";
 
 function favicon(url: string) {
   try {
@@ -198,8 +198,7 @@ export function AppCard({ r }: { r: App }) {
   );
 }
 
-export function ModelCard({ r }: { r: Model }) {
-  const { t } = useTranslation();
+export function ModelCard({ r }: { r: Model }) {  const { t } = useTranslation();
   return (
     <div className="result-item">
       <div className="result-title">
@@ -271,3 +270,67 @@ export function ModelCard({ r }: { r: Model }) {
 }
 
 
+
+
+const PLATFORM_ICONS: Record<string, ReactNode> = {
+  win:   <Monitor size={13} />,
+  mac:   <Apple size={13} />,
+  linux: <Terminal size={13} />,
+};
+
+const REVIEW_COLOR: Record<string, string> = {
+  positive:          "#4caf50",
+  mixed:             "#f57c00",
+  negative:          "#e53935",
+  overwhelminglyPos: "#2e7d32",
+  overwhelminglyNeg: "#b71c1c",
+  mostlyPositive:    "#66bb6a",
+  mostlyNegative:    "#ef5350",
+};
+
+export function GameCard({ r }: { r: Game }) {
+  const reviewColor = r.ReviewClass ? (REVIEW_COLOR[r.ReviewClass] ?? "var(--muted)") : undefined;
+  return (
+    <div className="result-item" style={{ display: "flex", gap: "12px" }}>
+      {r.ImageURL && (
+        <img
+          src={r.ImageURL}
+          alt=""
+          width={92}
+          height={43}
+          style={{ borderRadius: "4px", objectFit: "cover", flexShrink: 0 }}
+          onError={e => (e.currentTarget.style.display = "none")}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="result-title">
+          <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+        </div>
+        {r.ReviewSummary && (
+          <div className="result-snippet" style={{ color: reviewColor, fontSize: "12px" }}>
+            {r.ReviewSummary.replace(/&lt;br&gt;/g, " ").replace(/&amp;/g, "&")}
+          </div>
+        )}
+        <div className="result-meta">
+          {r.Price && (
+            <span style={{ fontWeight: 600 }}>
+              {r.DiscountPercent && (
+                <span style={{ color: "#4caf50", marginRight: 4 }}>{r.DiscountPercent}</span>
+              )}
+              {r.OriginalPrice && (
+                <span style={{ textDecoration: "line-through", color: "var(--muted)", marginRight: 4, fontWeight: 400 }}>
+                  {r.OriginalPrice}
+                </span>
+              )}
+              {r.Price}
+            </span>
+          )}
+          {r.ReleaseDate && <span>{r.ReleaseDate}</span>}
+          {r.Platforms?.map(p => (
+            <span key={p} title={p}>{PLATFORM_ICONS[p] ?? p}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
