@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Globe, Code, Download, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu } from "lucide-react";
+import { Search, Globe, Code, Download, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu, Gamepad2 } from "lucide-react";
 import { doSearch } from "../api";
-import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App as AppType, Model as ModelType } from "../types";
-import { WebResultCard, RepoCard, TorrentCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard } from "./ResultCards";
+import type { Tab, WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game } from "../types";
+import { WebResultCard, RepoCard, TorrentCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard } from "./ResultCards";
 
 const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "web", icon: <Globe size={14} /> },
   { id: "software", icon: <Code size={14} /> },
   { id: "apps", icon: <LayoutGrid size={14} /> },
+  { id: "games", icon: <Gamepad2 size={14} /> },
   { id: "ml", icon: <Cpu size={14} /> },
   { id: "torrents", icon: <Download size={14} /> },
   { id: "academic", icon: <BookOpen size={14} /> },
@@ -30,7 +31,7 @@ const SOURCE_ICONS: Record<string, string> = {
   exploitdb:   "https://icons.bitwarden.net/exploit-db.com/icon.png",
   flathub:     "https://icons.bitwarden.net/flathub.org/icon.png",
   homebrew:    "https://icons.bitwarden.net/brew.sh/icon.png",
-  ollama:      "https://icons.bitwarden.net/ollama.com/icon.png",
+  steam:       "https://icons.bitwarden.net/store.steampowered.com/icon.png",
   huggingface: "https://icons.bitwarden.net/huggingface.co/icon.png",
 };
 
@@ -75,7 +76,7 @@ export default function App() {
   const [vulnSource, setVulnSource] = useState("nvd");
   const [mlSource, setMlSource] = useState("ollama");
   const [page, setPage] = useState(1);
-  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper | CVE | Exploit | AppType | ModelType)[]>([]);
+  const [results, setResults] = useState<(WebResult | Repository | Torrent | NyaaTorrent | Paper | CVE | Exploit | AppType | ModelType | Game)[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -132,7 +133,6 @@ export default function App() {
   const hasResults = results.length > 0;
   // piratebay returns all results in one shot — no next page
   const canLoadMore = tab !== "torrents" || torrentSource === "nyaa";
-
   return (
     <div className="container">
       <header>
@@ -196,6 +196,9 @@ export default function App() {
           {tab === "ml" && (
             <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />
           )}
+          {tab === "games" && (
+            <SourcePicker options={["steam"]} value="steam" onChange={() => {}} />
+          )}
         </div>
       </header>
 
@@ -222,6 +225,7 @@ export default function App() {
           {tab === "vuln" && vulnSource === "nvd" && (results as CVE[]).map((r, i) => <CVECard key={i} r={r} />)}
           {tab === "vuln" && vulnSource === "exploitdb" && (results as Exploit[]).map((r, i) => <ExploitCard key={i} r={r} />)}
           {tab === "ml" && (results as ModelType[]).map((r, i) => <ModelCard key={i} r={r} />)}
+          {tab === "games" && (results as Game[]).map((r, i) => <GameCard key={i} r={r} />)}
         </div>
 
         {hasResults && canLoadMore && (
