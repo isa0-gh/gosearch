@@ -1,6 +1,27 @@
 export type Tab = "web" | "software" | "torrents" | "academic" | "vuln" | "apps" | "ml" | "games";
 
-export interface Game {
+export interface ItchGame {
+  GameID: string;
+  Title: string;
+  URL: string;
+  Author: string;
+  AuthorURL: string;
+  Description: string;
+  Genre: string;
+  ThumbnailURL: string;
+  Platforms: {
+    Windows: boolean;
+    MacOS: boolean;
+    Linux: boolean;
+    Web: boolean;
+    Android: boolean;
+  };
+  Rating: {
+    Average: number;
+    Total: number;
+    StarPercentage: number;
+  } | null;
+}
   AppID: string;
   Title: string;
   URL: string;
