@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Star, Globe, Download, Magnet, Package, Copy, Check } from "lucide-react";
-import { useState } from "react";
-import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model } from "../types";
+import { Star, Globe, Download, Package, Copy, Check, Monitor, Apple, Terminal } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import type { WebResult, Repository, Paper, CVE, Exploit, App, Model, Game, ItchGame } from "../types";
 
 function favicon(url: string) {
   try {
@@ -49,39 +49,6 @@ export function RepoCard({ r }: { r: Repository }) {
         {r.Language && <span className="meta-pill">{r.Language}</span>}
         {r.UpdatedAt && <span>{t("fields.updated")} {new Date(r.UpdatedAt).toLocaleDateString()}</span>}
       </div>
-    </div>
-  );
-}
-
-export function TorrentCard({ r }: { r: Torrent | NyaaTorrent }) {
-  const { t } = useTranslation();
-  const isPirate = "InfoHash" in r;
-  return (
-    <div className="result-item">
-      <div className="result-title">
-        {"URL" in r
-          ? <a href={(r as NyaaTorrent).URL} target="_blank" rel="noopener noreferrer">{r.Name}</a>
-          : r.Name}
-      </div>
-      <div className="result-meta">
-        <span style={{ color: "#4caf50" }}>↑ {r.Seeders}</span>
-        <span style={{ color: "#e57373" }}>↓ {r.Leechers}</span>
-        {"Downloads" in r && <span><Download size={11} /> {(r as NyaaTorrent).Downloads}</span>}
-        {isPirate && (r as Torrent).Size > 0 && (
-          <span>{((r as Torrent).Size / 1_073_741_824) >= 1
-            ? `${((r as Torrent).Size / 1_073_741_824).toFixed(2)} GB`
-            : `${((r as Torrent).Size / 1_048_576).toFixed(1)} MB`}
-          </span>
-        )}
-        {!isPirate && (r as NyaaTorrent).Size && <span>{(r as NyaaTorrent).Size}</span>}
-        {r.Category && <span className="meta-pill">{r.Category}</span>}
-        {isPirate && (r as Torrent).Uploader && <span>{t("fields.uploader")}: {(r as Torrent).Uploader}</span>}
-      </div>
-      {r.MagnetURL && (
-        <a className="magnet-link" href={r.MagnetURL}>
-          <Magnet size={11} /> magnet
-        </a>
-      )}
     </div>
   );
 }
@@ -198,8 +165,7 @@ export function AppCard({ r }: { r: App }) {
   );
 }
 
-export function ModelCard({ r }: { r: Model }) {
-  const { t } = useTranslation();
+export function ModelCard({ r }: { r: Model }) {  const { t } = useTranslation();
   return (
     <div className="result-item">
       <div className="result-title">
@@ -271,3 +237,109 @@ export function ModelCard({ r }: { r: Model }) {
 }
 
 
+
+
+const PLATFORM_ICONS: Record<string, ReactNode> = {
+  win:   <Monitor size={13} />,
+  mac:   <Apple size={13} />,
+  linux: <Terminal size={13} />,
+};
+
+const REVIEW_COLOR: Record<string, string> = {
+  positive:          "#4caf50",
+  mixed:             "#f57c00",
+  negative:          "#e53935",
+  overwhelminglyPos: "#2e7d32",
+  overwhelminglyNeg: "#b71c1c",
+  mostlyPositive:    "#66bb6a",
+  mostlyNegative:    "#ef5350",
+};
+
+export function GameCard({ r }: { r: Game }) {
+  const reviewColor = r.ReviewClass ? (REVIEW_COLOR[r.ReviewClass] ?? "var(--muted)") : undefined;
+  return (
+    <div className="result-item" style={{ display: "flex", gap: "12px" }}>
+      {r.ImageURL && (
+        <img
+          src={r.ImageURL}
+          alt=""
+          width={92}
+          height={43}
+          style={{ borderRadius: "4px", objectFit: "cover", flexShrink: 0 }}
+          onError={e => (e.currentTarget.style.display = "none")}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="result-title">
+          <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+        </div>
+        {r.ReviewSummary && (
+          <div className="result-snippet" style={{ color: reviewColor, fontSize: "12px" }}>
+            {r.ReviewSummary.replace(/&lt;br&gt;/g, " ").replace(/&amp;/g, "&")}
+          </div>
+        )}
+        <div className="result-meta">
+          {r.Price && (
+            <span style={{ fontWeight: 600 }}>
+              {r.DiscountPercent && (
+                <span style={{ color: "#4caf50", marginRight: 4 }}>{r.DiscountPercent}</span>
+              )}
+              {r.OriginalPrice && (
+                <span style={{ textDecoration: "line-through", color: "var(--muted)", marginRight: 4, fontWeight: 400 }}>
+                  {r.OriginalPrice}
+                </span>
+              )}
+              {r.Price}
+            </span>
+          )}
+          {r.ReleaseDate && <span>{r.ReleaseDate}</span>}
+          {r.Platforms?.map(p => (
+            <span key={p} title={p}>{PLATFORM_ICONS[p] ?? p}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ItchGameCard({ r }: { r: ItchGame }) {
+  return (
+    <div className="result-item" style={{ display: "flex", gap: "12px" }}>
+      {r.ThumbnailURL && (
+        <img
+          src={r.ThumbnailURL}
+          alt=""
+          width={92}
+          height={69}
+          style={{ borderRadius: "4px", objectFit: "cover", flexShrink: 0 }}
+          onError={e => (e.currentTarget.style.display = "none")}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="result-title">
+          <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+        </div>
+        {r.Author && (
+          <div className="result-url">
+            <a href={r.AuthorURL} target="_blank" rel="noopener noreferrer">{r.Author}</a>
+          </div>
+        )}
+        {r.Description && <div className="result-snippet">{r.Description}</div>}
+        <div className="result-meta">
+          {r.Rating && (
+            <span title={`${r.Rating.Total} ratings`}>
+              ★ {r.Rating.Average.toFixed(2)}
+              <span style={{ color: "var(--muted)", marginLeft: 3 }}>({r.Rating.Total})</span>
+            </span>
+          )}
+          {r.Genre && <span className="meta-pill">{r.Genre}</span>}
+          {r.Platforms.Windows && <span title="Windows"><Monitor size={13} /></span>}
+          {r.Platforms.MacOS && <span title="macOS"><Apple size={13} /></span>}
+          {r.Platforms.Linux && <span title="Linux"><Terminal size={13} /></span>}
+          {r.Platforms.Web && <span title="Web"><Globe size={13} /></span>}
+          {r.Platforms.Android && <span title="Android"><Download size={13} /></span>}
+        </div>
+      </div>
+    </div>
+  );
+}

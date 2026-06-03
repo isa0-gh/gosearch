@@ -1,4 +1,41 @@
-export type Tab = "web" | "software" | "torrents" | "academic" | "vuln" | "apps" | "ml";
+export type Tab = "web" | "software" | "academic" | "vuln" | "apps" | "ml" | "games";
+
+export interface Game {
+  AppID: string;
+  Title: string;
+  URL: string;
+  ImageURL: string;
+  ReleaseDate: string;
+  Price: string;
+  OriginalPrice: string;
+  DiscountPercent: string;
+  ReviewSummary: string;
+  ReviewClass: string;
+  Platforms: string[];
+}
+
+export interface ItchGame {
+  GameID: string;
+  Title: string;
+  URL: string;
+  Author: string;
+  AuthorURL: string;
+  Description: string;
+  Genre: string;
+  ThumbnailURL: string;
+  Platforms: {
+    Windows: boolean;
+    MacOS: boolean;
+    Linux: boolean;
+    Web: boolean;
+    Android: boolean;
+  };
+  Rating: {
+    Average: number;
+    Total: number;
+    StarPercentage: number;
+  } | null;
+}
 
 export interface Model {
   name: string;
@@ -63,28 +100,4 @@ export interface Repository {
   Stars: number;
   Language: string;
   UpdatedAt: string;
-}
-
-export interface Torrent {
-  Name: string;
-  InfoHash: string;
-  MagnetURL: string;
-  Seeders: number;
-  Leechers: number;
-  Size: number;
-  AddedAt: string;
-  Category: string;
-  Uploader: string;
-}
-
-export interface NyaaTorrent {
-  Name: string;
-  URL: string;
-  MagnetURL: string;
-  Size: string;
-  Category: string;
-  Seeders: number;
-  Leechers: number;
-  Downloads: number;
-  AddedAt: string;
 }

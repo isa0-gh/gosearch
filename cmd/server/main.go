@@ -9,10 +9,10 @@ import (
 
 	"github.com/isa0-gh/gosearch/internal/academic"
 	"github.com/isa0-gh/gosearch/internal/apps"
+	"github.com/isa0-gh/gosearch/internal/games"
 	"github.com/isa0-gh/gosearch/internal/ml"
 	"github.com/isa0-gh/gosearch/internal/scrapers"
 	"github.com/isa0-gh/gosearch/internal/software"
-	"github.com/isa0-gh/gosearch/internal/torrents"
 	"github.com/isa0-gh/gosearch/internal/vuln"
 )
 
@@ -91,32 +91,6 @@ func handleSoftware(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, results)
-}
-
-// GET /api/v1/torrents?q=...&source=piratebay|nyaa&pages=1
-func handleTorrents(w http.ResponseWriter, r *http.Request) {
-	q := queryParam(r, "q")
-	if q == "" {
-		writeError(w, "q is required", http.StatusBadRequest)
-		return
-	}
-
-	switch queryParam(r, "source") {
-	case "nyaa":
-		results, err := torrents.NyaaSearch(q, pagesParam(r))
-		if err != nil {
-			writeError(w, err.Error(), http.StatusBadGateway)
-			return
-		}
-		writeJSON(w, results)
-	default: // piratebay
-		results, err := torrents.PirateBaySearch(q, 0)
-		if err != nil {
-			writeError(w, err.Error(), http.StatusBadGateway)
-			return
-		}
-		writeJSON(w, results)
-	}
 }
 
 // GET /api/v1/academic?q=...&source=nasa|openalex&pages=1
@@ -224,15 +198,42 @@ func handleML(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, results)
 }
 
+// GET /api/v1/games?q=...&source=steam|itchio&pages=1
+func handleGames(w http.ResponseWriter, r *http.Request) {
+	q := queryParam(r, "q")
+	if q == "" {
+		writeError(w, "q is required", http.StatusBadRequest)
+		return
+	}
+	pages := pagesParam(r)
+
+	switch queryParam(r, "source") {
+	case "itchio":
+		results, err := games.ItchSearch(q, pages)
+		if err != nil {
+			writeError(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, results)
+	default: // steam
+		results, err := games.SteamSearch(q, pages)
+		if err != nil {
+			writeError(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, results)
+	}
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/web", handleWeb)
 	mux.HandleFunc("/api/v1/software", handleSoftware)
-	mux.HandleFunc("/api/v1/torrents", handleTorrents)
 	mux.HandleFunc("/api/v1/academic", handleAcademic)
 	mux.HandleFunc("/api/v1/vuln", handleVuln)
 	mux.HandleFunc("/api/v1/apps", handleApps)
 	mux.HandleFunc("/api/v1/ml", handleML)
+	mux.HandleFunc("/api/v1/games", handleGames)
 
 	port := os.Getenv("GOSEARCH_BACKEND_PORT")
 	if port == "" {
