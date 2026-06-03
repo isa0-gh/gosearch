@@ -1,4 +1,18 @@
-export type Tab = "web" | "software" | "torrents" | "academic" | "vuln" | "apps" | "ml";
+export type Tab = "web" | "software" | "torrents" | "academic" | "vuln" | "apps" | "ml" | "games";
+
+export interface Game {
+  AppID: string;
+  Title: string;
+  URL: string;
+  ImageURL: string;
+  ReleaseDate: string;
+  Price: string;
+  OriginalPrice: string;
+  DiscountPercent: string;
+  ReviewSummary: string;
+  ReviewClass: string;
+  Platforms: string[];
+}
 
 export interface Model {
   name: string;
