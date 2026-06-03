@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Star, Globe, Download, Magnet, Package, Copy, Check, Monitor, Apple, Terminal } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model, Game } from "../types";
+import type { WebResult, Repository, Torrent, NyaaTorrent, Paper, CVE, Exploit, App, Model, Game, ItchGame } from "../types";
 
 function favicon(url: string) {
   try {
@@ -329,6 +329,48 @@ export function GameCard({ r }: { r: Game }) {
           {r.Platforms?.map(p => (
             <span key={p} title={p}>{PLATFORM_ICONS[p] ?? p}</span>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ItchGameCard({ r }: { r: ItchGame }) {
+  return (
+    <div className="result-item" style={{ display: "flex", gap: "12px" }}>
+      {r.ThumbnailURL && (
+        <img
+          src={r.ThumbnailURL}
+          alt=""
+          width={92}
+          height={69}
+          style={{ borderRadius: "4px", objectFit: "cover", flexShrink: 0 }}
+          onError={e => (e.currentTarget.style.display = "none")}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="result-title">
+          <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+        </div>
+        {r.Author && (
+          <div className="result-url">
+            <a href={r.AuthorURL} target="_blank" rel="noopener noreferrer">{r.Author}</a>
+          </div>
+        )}
+        {r.Description && <div className="result-snippet">{r.Description}</div>}
+        <div className="result-meta">
+          {r.Rating && (
+            <span title={`${r.Rating.Total} ratings`}>
+              ★ {r.Rating.Average.toFixed(2)}
+              <span style={{ color: "var(--muted)", marginLeft: 3 }}>({r.Rating.Total})</span>
+            </span>
+          )}
+          {r.Genre && <span className="meta-pill">{r.Genre}</span>}
+          {r.Platforms.Windows && <span title="Windows"><Monitor size={13} /></span>}
+          {r.Platforms.MacOS && <span title="macOS"><Apple size={13} /></span>}
+          {r.Platforms.Linux && <span title="Linux"><Terminal size={13} /></span>}
+          {r.Platforms.Web && <span title="Web"><Globe size={13} /></span>}
+          {r.Platforms.Android && <span title="Android"><Download size={13} /></span>}
         </div>
       </div>
     </div>
