@@ -11,7 +11,7 @@ A self-hosted metasearch engine with a Go backend and a React frontend. It aggre
 - Academic paper search via OpenAlex and NASA Technical Reports Server (NTRS)
 - Vulnerability search via NVD (CVE database) and Exploit-DB
 - App search via Flathub and Homebrew
-- Game search via Steam and itch.io
+- Game search via Steam, itch.io, and GOG
 - LLM/ML model search via Ollama and Hugging Face
 - Lightweight JSON API with pagination support
 - React frontend with dark mode, i18n (English and Turkish), and per-tab source switching
@@ -29,7 +29,7 @@ internal/
   academic/      Academic API clients (OpenAlex, NASA NTRS)
   vuln/          Vulnerability clients (NVD, Exploit-DB)
   apps/          Application API clients (Flathub, Homebrew)
-  games/         Game store scrapers (Steam, itch.io)
+  games/         Game store clients (Steam, itch.io, GOG)
   ml/            LLM/ML model clients (Ollama, Hugging Face)
 cmd/tests/       Manual test binaries for each source
 ```
@@ -49,7 +49,7 @@ Base URL: `http://localhost:8080/api/v1`
 | `/academic` | `q`, `source=openalex\|nasa`, `pages`              |
 | `/vuln`     | `q`, `source=nvd\|exploitdb`, `pages`              |
 | `/apps`     | `q`, `source=flathub\|homebrew`, `pages`           |
-| `/games`    | `q`, `source=steam\|itchio`, `pages`               |
+| `/games`    | `q`, `source=steam\|itchio\|gog`, `pages`          |
 | `/ml`       | `q`, `source=ollama\|huggingface`, `pages`         |
 
 All endpoints return JSON arrays. Error responses are `{"error": "..."}` with appropriate HTTP status codes. Full schema is available in `openapi.yml`.
@@ -109,6 +109,7 @@ go run ./cmd/tests/flathub
 go run ./cmd/tests/homebrew
 go run ./cmd/tests/steam
 go run ./cmd/tests/itchio
+go run ./cmd/tests/gog
 go run ./cmd/tests/ollama
 go run ./cmd/tests/huggingface
 ```
@@ -117,7 +118,7 @@ go run ./cmd/tests/huggingface
 
 ## Notes
 
-Web search results rely on HTML scraping and may break if upstream sites change their markup. Academic sources (OpenAlex and NASA NTRS) use official JSON APIs and are stable. The GitHub source uses the official REST API; GitLab and SourceForge use their respective APIs as well. NVD uses the official NIST REST API v2. Exploit-DB is queried via its DataTables JSON endpoint. Flathub uses its MeiliSearch-backed API. Homebrew is queried via its official website's Algolia index. Steam and itch.io results are scraped from their public search pages.
+Web search results rely on HTML scraping and may break if upstream sites change their markup. Academic sources (OpenAlex and NASA NTRS) use official JSON APIs and are stable. The GitHub source uses the official REST API; GitLab and SourceForge use their respective APIs as well. NVD uses the official NIST REST API v2. Exploit-DB is queried via its DataTables JSON endpoint. Flathub uses its MeiliSearch-backed API. Homebrew is queried via its official website's Algolia index. Steam and itch.io results are scraped from their public search pages. GOG is queried via its public catalog API.
 
 ---
 

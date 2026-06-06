@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Star, Globe, Download, Package, Copy, Check, Monitor, Apple, Terminal } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import type { WebResult, Repository, Paper, CVE, Exploit, App, Model, Game, ItchGame } from "../types";
+import type { WebResult, Repository, Paper, CVE, Exploit, App, Model, Game, ItchGame, GogGame } from "../types";
 
 function favicon(url: string) {
   try {
@@ -13,20 +13,21 @@ function favicon(url: string) {
 
 export function WebResultCard({ r }: { r: WebResult }) {
   const icon = favicon(r.URL);
+  let hostname = r.URL;
+  try { hostname = new URL(r.URL).hostname; } catch {}
   return (
     <div className="result-item">
-      <div className="result-url">
+      <div className="result-cite">
         {icon && (
           <img
             src={icon}
             alt=""
-            width={13}
-            height={13}
-            style={{ marginRight: 5, verticalAlign: "middle", opacity: 0.8 }}
+            width={16}
+            height={16}
             onError={e => (e.currentTarget.style.display = "none")}
           />
         )}
-        {r.URL}
+        <span>{hostname}</span>
       </div>
       <div className="result-title">
         <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
@@ -338,6 +339,60 @@ export function ItchGameCard({ r }: { r: ItchGame }) {
           {r.Platforms.Linux && <span title="Linux"><Terminal size={13} /></span>}
           {r.Platforms.Web && <span title="Web"><Globe size={13} /></span>}
           {r.Platforms.Android && <span title="Android"><Download size={13} /></span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const GOG_PLATFORM_ICONS: Record<string, ReactNode> = {
+  windows: <Monitor size={13} />,
+  osx:     <Apple size={13} />,
+  mac:     <Apple size={13} />,
+  linux:   <Terminal size={13} />,
+};
+
+export function GogGameCard({ r }: { r: GogGame }) {
+  return (
+    <div className="result-item" style={{ display: "flex", gap: "12px" }}>
+      {r.ImageURL && (
+        <img
+          src={r.ImageURL}
+          alt=""
+          width={92}
+          height={52}
+          style={{ borderRadius: "4px", objectFit: "cover", flexShrink: 0 }}
+          onError={e => (e.currentTarget.style.display = "none")}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="result-title">
+          <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
+        </div>
+        {r.Developers && r.Developers.length > 0 && (
+          <div className="result-url">{r.Developers.join(", ")}</div>
+        )}
+        <div className="result-meta">
+          {r.Price && (
+            <span style={{ fontWeight: 600 }}>
+              {r.DiscountPercent && (
+                <span style={{ color: "#4caf50", marginRight: 4 }}>{r.DiscountPercent}</span>
+              )}
+              {r.OriginalPrice && r.OriginalPrice !== r.Price && (
+                <span style={{ textDecoration: "line-through", color: "var(--muted)", marginRight: 4, fontWeight: 400 }}>
+                  {r.OriginalPrice}
+                </span>
+              )}
+              {r.Price}
+            </span>
+          )}
+          {r.ReleaseDate && <span>{r.ReleaseDate}</span>}
+          {r.Platforms?.map(p => (
+            <span key={p} title={p}>{GOG_PLATFORM_ICONS[p] ?? p}</span>
+          ))}
+          {r.Genres?.map(g => (
+            <span key={g} className="meta-pill">{g}</span>
+          ))}
         </div>
       </div>
     </div>

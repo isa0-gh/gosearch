@@ -1,4 +1,4 @@
-import type { Tab, WebResult, Repository, Paper, CVE, Exploit, App, Model, Game, ItchGame } from "./types";
+import type { Tab, WebResult, Repository, Paper, CVE, Exploit, App, Model, Game, ItchGame, GogGame } from "./types";
 
 const BASE = "/api/v1";
 
@@ -38,7 +38,7 @@ export async function searchML(q: string, source: string, pages: number): Promis
   return res.json();
 }
 
-export async function searchGames(q: string, source: string, pages: number): Promise<(Game | ItchGame)[]> {
+export async function searchGames(q: string, source: string, pages: number): Promise<(Game | ItchGame | GogGame)[]> {
   const res = await fetch(`${BASE}/games?q=${encodeURIComponent(q)}&source=${source}&pages=${pages}`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();

@@ -37,6 +37,23 @@ export interface ItchGame {
   } | null;
 }
 
+export interface GogGame {
+  ID: string;
+  Slug: string;
+  Title: string;
+  URL: string;
+  ImageURL: string;
+  ReleaseDate: string;
+  Price: string;
+  OriginalPrice: string;
+  DiscountPercent: string;
+  Developers: string[];
+  Publishers: string[];
+  Platforms: string[];
+  Genres: string[];
+  Tags: string[];
+}
+
 export interface Model {
   name: string;
   url: string;

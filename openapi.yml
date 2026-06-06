@@ -75,43 +75,6 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
-  /torrents:
-    get:
-      summary: Torrent search
-      parameters:
-        - name: q
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: source
-          in: query
-          schema:
-            type: string
-            enum: [piratebay, nyaa]
-            default: piratebay
-        - name: pages
-          in: query
-          schema:
-            type: integer
-            default: 1
-            description: Used by nyaa only
-      responses:
-        "200":
-          description: Torrent results
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/Torrent"
-                    - $ref: "#/components/schemas/NyaaTorrent"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "502":
-          $ref: "#/components/responses/BadGateway"
-
   /academic:
     get:
       summary: Academic paper search
@@ -250,6 +213,43 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
+  /games:
+    get:
+      summary: Game search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [steam, itchio, gog]
+            default: steam
+        - name: pages
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Game results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: "#/components/schemas/Game"
+                    - $ref: "#/components/schemas/ItchGame"
+                    - $ref: "#/components/schemas/GogGame"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
 components:
   schemas:
     App:
@@ -301,54 +301,6 @@ components:
         Language:
           type: string
         UpdatedAt:
-          type: string
-          format: date-time
-
-    Torrent:
-      type: object
-      properties:
-        Name:
-          type: string
-        InfoHash:
-          type: string
-        MagnetURL:
-          type: string
-        Seeders:
-          type: integer
-        Leechers:
-          type: integer
-        Size:
-          type: integer
-          description: Size in bytes
-        AddedAt:
-          type: string
-          format: date-time
-        Category:
-          type: string
-        Uploader:
-          type: string
-
-    NyaaTorrent:
-      type: object
-      properties:
-        Name:
-          type: string
-        URL:
-          type: string
-          format: uri
-        MagnetURL:
-          type: string
-        Size:
-          type: string
-        Category:
-          type: string
-        Seeders:
-          type: integer
-        Leechers:
-          type: integer
-        Downloads:
-          type: integer
-        AddedAt:
           type: string
           format: date-time
 
@@ -438,6 +390,126 @@ components:
           type: string
         updated:
           type: string
+
+    Game:
+      type: object
+      properties:
+        AppID:
+          type: string
+        Title:
+          type: string
+        URL:
+          type: string
+          format: uri
+        ImageURL:
+          type: string
+          format: uri
+        ReleaseDate:
+          type: string
+        Price:
+          type: string
+        OriginalPrice:
+          type: string
+        DiscountPercent:
+          type: string
+        ReviewSummary:
+          type: string
+        ReviewClass:
+          type: string
+        Platforms:
+          type: array
+          items:
+            type: string
+
+    ItchGame:
+      type: object
+      properties:
+        GameID:
+          type: string
+        Title:
+          type: string
+        URL:
+          type: string
+          format: uri
+        Author:
+          type: string
+        AuthorURL:
+          type: string
+          format: uri
+        Description:
+          type: string
+        Genre:
+          type: string
+        ThumbnailURL:
+          type: string
+          format: uri
+        Platforms:
+          type: object
+          properties:
+            Windows:
+              type: boolean
+            MacOS:
+              type: boolean
+            Linux:
+              type: boolean
+            Web:
+              type: boolean
+            Android:
+              type: boolean
+        Rating:
+          type: object
+          nullable: true
+          properties:
+            Average:
+              type: number
+            Total:
+              type: integer
+            StarPercentage:
+              type: number
+
+    GogGame:
+      type: object
+      properties:
+        ID:
+          type: string
+        Slug:
+          type: string
+        Title:
+          type: string
+        URL:
+          type: string
+          format: uri
+        ImageURL:
+          type: string
+          format: uri
+        ReleaseDate:
+          type: string
+        Price:
+          type: string
+        OriginalPrice:
+          type: string
+        DiscountPercent:
+          type: string
+        Developers:
+          type: array
+          items:
+            type: string
+        Publishers:
+          type: array
+          items:
+            type: string
+        Platforms:
+          type: array
+          items:
+            type: string
+        Genres:
+          type: array
+          items:
+            type: string
+        Tags:
+          type: array
+          items:
+            type: string
 
   responses:
     BadRequest:

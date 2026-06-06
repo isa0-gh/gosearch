@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Globe, Code, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu, Gamepad2 } from "lucide-react";
 import { doSearch } from "../api";
-import type { Tab, WebResult, Repository, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game, ItchGame } from "../types";
-import { WebResultCard, RepoCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard, ItchGameCard } from "./ResultCards";
+import type { Tab, WebResult, Repository, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game, ItchGame, GogGame } from "../types";
+import { WebResultCard, RepoCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard, ItchGameCard, GogGameCard } from "./ResultCards";
 
 const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "web", icon: <Globe size={14} /> },
@@ -30,6 +30,7 @@ const SOURCE_ICONS: Record<string, string> = {
   homebrew:    "https://icons.bitwarden.net/brew.sh/icon.png",
   steam:       "https://icons.bitwarden.net/store.steampowered.com/icon.png",
   itchio:      "https://icons.bitwarden.net/itch.io/icon.png",
+  gog:         "https://icons.bitwarden.net/gog.com/icon.png",
   huggingface: "https://icons.bitwarden.net/huggingface.co/icon.png",
 };
 
@@ -62,6 +63,69 @@ function SourcePicker({ options, value, onChange }: {
   );
 }
 
+function SearchBar({ query, setQuery, onSubmit, autoFocus }: {
+  query: string;
+  setQuery: (v: string) => void;
+  onSubmit: (e?: React.FormEvent) => void;
+  autoFocus?: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <form className="search-form" onSubmit={onSubmit}>
+      <Search size={18} className="search-icon" />
+      <input
+        className="search-input"
+        type="text"
+        placeholder={t("placeholder")}
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        autoFocus={autoFocus}
+      />
+    </form>
+  );
+}
+
+const DEFAULT_SOURCES: Record<Tab, string> = {
+  web: "ddg",
+  software: "github",
+  apps: "flathub",
+  academic: "openalex",
+  vuln: "nvd",
+  ml: "ollama",
+  games: "steam",
+};
+
+function getSourceForTab(tab: Tab, states: Record<string, string>): string {
+  if (tab === "web") return states.engine;
+  if (tab === "software") return states.software;
+  if (tab === "apps") return states.apps;
+  if (tab === "academic") return states.academic;
+  if (tab === "vuln") return states.vuln;
+  if (tab === "ml") return states.ml;
+  return states.games;
+}
+
+function pushURL(q: string, tab: Tab, source: string) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (tab !== "web") params.set("tab", tab);
+  if (source && source !== DEFAULT_SOURCES[tab]) params.set("source", source);
+  const qs = params.toString();
+  const url = qs ? `/?${qs}` : "/";
+  window.history.pushState(null, "", url);
+}
+
+function readURL(): { q: string; tab: Tab; source: string } | null {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get("q") ?? "";
+  if (!q) return null;
+  const tab = (params.get("tab") ?? "web") as Tab;
+  const validTabs: Tab[] = ["web", "software", "apps", "games", "ml", "academic", "vuln"];
+  if (!validTabs.includes(tab)) return { q, tab: "web", source: "ddg" };
+  const source = params.get("source") ?? DEFAULT_SOURCES[tab];
+  return { q, tab, source };
+}
+
 export default function App() {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<Tab>("web");
@@ -74,24 +138,78 @@ export default function App() {
   const [vulnSource, setVulnSource] = useState("nvd");
   const [mlSource, setMlSource] = useState("ollama");
   const [page, setPage] = useState(1);
-  const [results, setResults] = useState<(WebResult | Repository | Paper | CVE | Exploit | AppType | ModelType | Game | ItchGame)[]>([]);
+  const [results, setResults] = useState<(WebResult | Repository | Paper | CVE | Exploit | AppType | ModelType | Game | ItchGame | GogGame)[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
   }, [dark]);
 
-  const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
+  const sourceStates = { engine, software: source, apps: appsSource, academic: academicSource, vuln: vulnSource, ml: mlSource, games: gamesSource };
 
-  const fetch = async (pageNum: number, append: boolean) => {
-    const src = tab === "software" ? source : tab === "academic" ? academicSource : tab === "vuln" ? vulnSource : tab === "apps" ? appsSource : tab === "ml" ? mlSource : tab === "games" ? gamesSource : source;
-    const data = await doSearch(tab, query.trim(), engine, src, pageNum);
+  const doFetch = async (pageNum: number, append: boolean, searchTab: Tab = tab, searchQuery: string = query) => {
+    const src = searchTab === "software" ? source : searchTab === "academic" ? academicSource : searchTab === "vuln" ? vulnSource : searchTab === "apps" ? appsSource : searchTab === "ml" ? mlSource : searchTab === "games" ? gamesSource : engine;
+    const data = await doSearch(searchTab, searchQuery.trim(), engine, src, pageNum);
     setResults(prev => append ? [...prev, ...(data ?? [])] : (data ?? []));
     return data;
   };
+
+  const runSearch = async (searchQuery: string, searchTab: Tab, searchSource?: string) => {
+    setQuery(searchQuery);
+    setTab(searchTab);
+    setLoading(true);
+    setError("");
+    setPage(1);
+    setHasSearched(true);
+
+    if (searchSource) {
+      if (searchTab === "web") setEngine(searchSource);
+      else if (searchTab === "software") setSource(searchSource);
+      else if (searchTab === "apps") setAppsSource(searchSource);
+      else if (searchTab === "academic") setAcademicSource(searchSource);
+      else if (searchTab === "vuln") setVulnSource(searchSource);
+      else if (searchTab === "ml") setMlSource(searchSource);
+      else if (searchTab === "games") setGamesSource(searchSource);
+    }
+
+    const src = searchSource ?? getSourceForTab(searchTab, sourceStates);
+    try {
+      const data = await doSearch(searchTab, searchQuery.trim(), engine, src, 1);
+      setResults(data ?? []);
+    } catch {
+      setError(t("error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const initial = readURL();
+    if (initial) {
+      runSearch(initial.q, initial.tab, initial.source);
+    }
+
+    const onPop = () => {
+      const state = readURL();
+      if (state) {
+        runSearch(state.q, state.tab, state.source);
+      } else {
+        setHasSearched(false);
+        setResults([]);
+        setQuery("");
+        setError("");
+        setPage(1);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -99,8 +217,11 @@ export default function App() {
     setLoading(true);
     setError("");
     setPage(1);
+    setHasSearched(true);
+    const src = getSourceForTab(tab, sourceStates);
+    pushURL(query.trim(), tab, src);
     try {
-      await fetch(1, false);
+      await doFetch(1, false);
     } catch {
       setError(t("error"));
     } finally {
@@ -112,7 +233,7 @@ export default function App() {
     const next = page + 1;
     setLoadingMore(true);
     try {
-      await fetch(next, true);
+      await doFetch(next, true);
       setPage(next);
     } catch {
       setError(t("error"));
@@ -126,74 +247,79 @@ export default function App() {
     setResults([]);
     setError("");
     setPage(1);
+    if (hasSearched) {
+      const src = getSourceForTab(id, sourceStates);
+      pushURL(query.trim(), id, src);
+    }
   };
+
+  const goHome = () => {
+    setHasSearched(false);
+    setResults([]);
+    setQuery("");
+    setError("");
+    setPage(1);
+    window.history.pushState(null, "", "/");
+  };
+
+  const headerActions = (
+    <div className="header-actions">
+      <button className="icon-btn" onClick={() => setDark(d => !d)} aria-label="toggle theme">
+        {dark ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
+      <button className="icon-btn" onClick={toggleLang}>{t("lang")}</button>
+    </div>
+  );
+
+  if (!hasSearched) {
+    return (
+      <div className="landing">
+        <div className="landing-actions">{headerActions}</div>
+        <div className="landing-logo">go<span>search</span></div>
+        <div className="landing-search">
+          <SearchBar query={query} setQuery={setQuery} onSubmit={submit} autoFocus />
+        </div>
+      </div>
+    );
+  }
 
   const hasResults = results.length > 0;
   return (
-    <div className="container">
-      <header>
-        <div className="header-row">
-          <div className="logo">go<span>search</span></div>
-          <div className="header-actions">
-            <button className="icon-btn" onClick={() => setDark(d => !d)} aria-label="toggle theme">
-              {dark ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-            <button className="icon-btn" onClick={toggleLang}>{t("lang")}</button>
+    <>
+      <div className="results-header">
+        <div className="results-header-inner">
+          <div className="results-header-top">
+            <a className="header-logo" onClick={goHome}>go<span>search</span></a>
+            <div className="results-search">
+              <SearchBar query={query} setQuery={setQuery} onSubmit={submit} />
+            </div>
+            {headerActions}
+          </div>
+
+          <div className="tabs">
+            {TABS.map(({ id, icon }) => (
+              <button
+                key={id}
+                className={`tab-btn ${tab === id ? "active" : ""}`}
+                onClick={() => handleTabChange(id)}
+              >
+                {icon}
+                <span>{t(`tabs.${id}`)}</span>
+              </button>
+            ))}
           </div>
         </div>
+      </div>
 
-        <form className="search-form" onSubmit={submit}>
-          <input
-            className="search-input"
-            type="text"
-            placeholder={t("placeholder")}
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            autoFocus
-          />
-          <button className="search-btn" type="submit" disabled={loading}>
-            <Search size={15} />
-            <span>{t("search")}</span>
-          </button>
-        </form>
-
-        <div className="tabs">
-          {TABS.map(({ id, icon }) => (
-            <button
-              key={id}
-              className={`tab-btn ${tab === id ? "active" : ""}`}
-              onClick={() => handleTabChange(id)}
-            >
-              {icon}
-              <span>{t(`tabs.${id}`)}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="filters">
-          {tab === "web" && (
-            <SourcePicker options={["ddg","bing","brave"]} value={engine} onChange={setEngine} />
-          )}
-          {tab === "software" && (
-            <SourcePicker options={["github","gitlab","sourceforge"]} value={source} onChange={setSource} />
-          )}
-          {tab === "apps" && (
-            <SourcePicker options={["flathub","homebrew"]} value={appsSource} onChange={setAppsSource} />
-          )}
-          {tab === "academic" && (
-            <SourcePicker options={["openalex","nasa"]} value={academicSource} onChange={setAcademicSource} />
-          )}
-          {tab === "vuln" && (
-            <SourcePicker options={["nvd","exploitdb"]} value={vulnSource} onChange={setVulnSource} />
-          )}
-          {tab === "ml" && (
-            <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />
-          )}
-          {tab === "games" && (
-            <SourcePicker options={["steam", "itchio"]} value={gamesSource} onChange={setGamesSource} />
-          )}
-        </div>
-      </header>
+      <div className="filters">
+        {tab === "web" && <SourcePicker options={["ddg","bing","brave"]} value={engine} onChange={setEngine} />}
+        {tab === "software" && <SourcePicker options={["github","gitlab","sourceforge"]} value={source} onChange={setSource} />}
+        {tab === "apps" && <SourcePicker options={["flathub","homebrew"]} value={appsSource} onChange={setAppsSource} />}
+        {tab === "academic" && <SourcePicker options={["openalex","nasa"]} value={academicSource} onChange={setAcademicSource} />}
+        {tab === "vuln" && <SourcePicker options={["nvd","exploitdb"]} value={vulnSource} onChange={setVulnSource} />}
+        {tab === "ml" && <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />}
+        {tab === "games" && <SourcePicker options={["steam", "itchio", "gog"]} value={gamesSource} onChange={setGamesSource} />}
+      </div>
 
       <main>
         {loading && (
@@ -219,18 +345,19 @@ export default function App() {
           {tab === "ml" && (results as ModelType[]).map((r, i) => <ModelCard key={i} r={r} />)}
           {tab === "games" && gamesSource === "steam" && (results as Game[]).map((r, i) => <GameCard key={i} r={r} />)}
           {tab === "games" && gamesSource === "itchio" && (results as ItchGame[]).map((r, i) => <ItchGameCard key={i} r={r} />)}
+          {tab === "games" && gamesSource === "gog" && (results as GogGame[]).map((r, i) => <GogGameCard key={r.ID || i} r={r} />)}
         </div>
 
         {hasResults && (
-          <footer className="load-more-footer">
+          <div className="load-more-footer">
             <button className="next-btn" onClick={loadMore} disabled={loadingMore}>
               {loadingMore
                 ? <div className="loading-dots"><span /><span /><span /></div>
                 : <><span>{t("nextPage")}</span> <ChevronRight size={15} /></>}
             </button>
-          </footer>
+          </div>
         )}
       </main>
-    </div>
+    </>
   );
 }
