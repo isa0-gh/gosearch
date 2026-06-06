@@ -63,6 +63,28 @@ function SourcePicker({ options, value, onChange }: {
   );
 }
 
+function SearchBar({ query, setQuery, onSubmit, autoFocus }: {
+  query: string;
+  setQuery: (v: string) => void;
+  onSubmit: (e?: React.FormEvent) => void;
+  autoFocus?: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <form className="search-form" onSubmit={onSubmit}>
+      <Search size={18} className="search-icon" />
+      <input
+        className="search-input"
+        type="text"
+        placeholder={t("placeholder")}
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        autoFocus={autoFocus}
+      />
+    </form>
+  );
+}
+
 export default function App() {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<Tab>("web");
@@ -80,6 +102,7 @@ export default function App() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
@@ -100,6 +123,7 @@ export default function App() {
     setLoading(true);
     setError("");
     setPage(1);
+    setHasSearched(true);
     try {
       await fetch(1, false);
     } catch {
@@ -129,72 +153,72 @@ export default function App() {
     setPage(1);
   };
 
+  const goHome = () => {
+    setHasSearched(false);
+    setResults([]);
+    setQuery("");
+    setError("");
+    setPage(1);
+  };
+
+  const headerActions = (
+    <div className="header-actions">
+      <button className="icon-btn" onClick={() => setDark(d => !d)} aria-label="toggle theme">
+        {dark ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
+      <button className="icon-btn" onClick={toggleLang}>{t("lang")}</button>
+    </div>
+  );
+
+  if (!hasSearched) {
+    return (
+      <div className="landing">
+        <div className="landing-actions">{headerActions}</div>
+        <div className="landing-logo">go<span>search</span></div>
+        <div className="landing-search">
+          <SearchBar query={query} setQuery={setQuery} onSubmit={submit} autoFocus />
+        </div>
+      </div>
+    );
+  }
+
   const hasResults = results.length > 0;
   return (
-    <div className="container">
-      <header>
-        <div className="header-row">
-          <div className="logo">go<span>search</span></div>
-          <div className="header-actions">
-            <button className="icon-btn" onClick={() => setDark(d => !d)} aria-label="toggle theme">
-              {dark ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-            <button className="icon-btn" onClick={toggleLang}>{t("lang")}</button>
+    <>
+      <div className="results-header">
+        <div className="results-header-inner">
+          <div className="results-header-top">
+            <a className="header-logo" onClick={goHome}>go<span>search</span></a>
+            <div className="results-search">
+              <SearchBar query={query} setQuery={setQuery} onSubmit={submit} />
+            </div>
+            {headerActions}
+          </div>
+
+          <div className="tabs">
+            {TABS.map(({ id, icon }) => (
+              <button
+                key={id}
+                className={`tab-btn ${tab === id ? "active" : ""}`}
+                onClick={() => handleTabChange(id)}
+              >
+                {icon}
+                <span>{t(`tabs.${id}`)}</span>
+              </button>
+            ))}
           </div>
         </div>
+      </div>
 
-        <form className="search-form" onSubmit={submit}>
-          <input
-            className="search-input"
-            type="text"
-            placeholder={t("placeholder")}
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            autoFocus
-          />
-          <button className="search-btn" type="submit" disabled={loading}>
-            <Search size={15} />
-            <span>{t("search")}</span>
-          </button>
-        </form>
-
-        <div className="tabs">
-          {TABS.map(({ id, icon }) => (
-            <button
-              key={id}
-              className={`tab-btn ${tab === id ? "active" : ""}`}
-              onClick={() => handleTabChange(id)}
-            >
-              {icon}
-              <span>{t(`tabs.${id}`)}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="filters">
-          {tab === "web" && (
-            <SourcePicker options={["ddg","bing","brave"]} value={engine} onChange={setEngine} />
-          )}
-          {tab === "software" && (
-            <SourcePicker options={["github","gitlab","sourceforge"]} value={source} onChange={setSource} />
-          )}
-          {tab === "apps" && (
-            <SourcePicker options={["flathub","homebrew"]} value={appsSource} onChange={setAppsSource} />
-          )}
-          {tab === "academic" && (
-            <SourcePicker options={["openalex","nasa"]} value={academicSource} onChange={setAcademicSource} />
-          )}
-          {tab === "vuln" && (
-            <SourcePicker options={["nvd","exploitdb"]} value={vulnSource} onChange={setVulnSource} />
-          )}
-          {tab === "ml" && (
-            <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />
-          )}
-          {tab === "games" && (
-            <SourcePicker options={["steam", "itchio", "gog"]} value={gamesSource} onChange={setGamesSource} />
-          )}
-        </div>
-      </header>
+      <div className="filters">
+        {tab === "web" && <SourcePicker options={["ddg","bing","brave"]} value={engine} onChange={setEngine} />}
+        {tab === "software" && <SourcePicker options={["github","gitlab","sourceforge"]} value={source} onChange={setSource} />}
+        {tab === "apps" && <SourcePicker options={["flathub","homebrew"]} value={appsSource} onChange={setAppsSource} />}
+        {tab === "academic" && <SourcePicker options={["openalex","nasa"]} value={academicSource} onChange={setAcademicSource} />}
+        {tab === "vuln" && <SourcePicker options={["nvd","exploitdb"]} value={vulnSource} onChange={setVulnSource} />}
+        {tab === "ml" && <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />}
+        {tab === "games" && <SourcePicker options={["steam", "itchio", "gog"]} value={gamesSource} onChange={setGamesSource} />}
+      </div>
 
       <main>
         {loading && (
@@ -224,15 +248,15 @@ export default function App() {
         </div>
 
         {hasResults && (
-          <footer className="load-more-footer">
+          <div className="load-more-footer">
             <button className="next-btn" onClick={loadMore} disabled={loadingMore}>
               {loadingMore
                 ? <div className="loading-dots"><span /><span /><span /></div>
                 : <><span>{t("nextPage")}</span> <ChevronRight size={15} /></>}
             </button>
-          </footer>
+          </div>
         )}
       </main>
-    </div>
+    </>
   );
 }
