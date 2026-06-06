@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Globe, Code, BookOpen, ShieldAlert, Moon, Sun, ChevronRight, LayoutGrid, Cpu, Gamepad2 } from "lucide-react";
 import { doSearch } from "../api";
-import type { Tab, WebResult, Repository, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game, ItchGame } from "../types";
-import { WebResultCard, RepoCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard, ItchGameCard } from "./ResultCards";
+import type { Tab, WebResult, Repository, Paper, CVE, Exploit, App as AppType, Model as ModelType, Game, ItchGame, GogGame } from "../types";
+import { WebResultCard, RepoCard, PaperCard, CVECard, ExploitCard, AppCard, ModelCard, GameCard, ItchGameCard, GogGameCard } from "./ResultCards";
 
 const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "web", icon: <Globe size={14} /> },
@@ -30,6 +30,7 @@ const SOURCE_ICONS: Record<string, string> = {
   homebrew:    "https://icons.bitwarden.net/brew.sh/icon.png",
   steam:       "https://icons.bitwarden.net/store.steampowered.com/icon.png",
   itchio:      "https://icons.bitwarden.net/itch.io/icon.png",
+  gog:         "https://icons.bitwarden.net/gog.com/icon.png",
   huggingface: "https://icons.bitwarden.net/huggingface.co/icon.png",
 };
 
@@ -74,7 +75,7 @@ export default function App() {
   const [vulnSource, setVulnSource] = useState("nvd");
   const [mlSource, setMlSource] = useState("ollama");
   const [page, setPage] = useState(1);
-  const [results, setResults] = useState<(WebResult | Repository | Paper | CVE | Exploit | AppType | ModelType | Game | ItchGame)[]>([]);
+  const [results, setResults] = useState<(WebResult | Repository | Paper | CVE | Exploit | AppType | ModelType | Game | ItchGame | GogGame)[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -190,7 +191,7 @@ export default function App() {
             <SourcePicker options={["ollama", "huggingface"]} value={mlSource} onChange={setMlSource} />
           )}
           {tab === "games" && (
-            <SourcePicker options={["steam", "itchio"]} value={gamesSource} onChange={setGamesSource} />
+            <SourcePicker options={["steam", "itchio", "gog"]} value={gamesSource} onChange={setGamesSource} />
           )}
         </div>
       </header>
@@ -219,6 +220,7 @@ export default function App() {
           {tab === "ml" && (results as ModelType[]).map((r, i) => <ModelCard key={i} r={r} />)}
           {tab === "games" && gamesSource === "steam" && (results as Game[]).map((r, i) => <GameCard key={i} r={r} />)}
           {tab === "games" && gamesSource === "itchio" && (results as ItchGame[]).map((r, i) => <ItchGameCard key={i} r={r} />)}
+          {tab === "games" && gamesSource === "gog" && (results as GogGame[]).map((r, i) => <GogGameCard key={i} r={r} />)}
         </div>
 
         {hasResults && (
