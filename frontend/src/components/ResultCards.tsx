@@ -13,20 +13,21 @@ function favicon(url: string) {
 
 export function WebResultCard({ r }: { r: WebResult }) {
   const icon = favicon(r.URL);
+  let hostname = r.URL;
+  try { hostname = new URL(r.URL).hostname; } catch {}
   return (
     <div className="result-item">
-      <div className="result-url">
+      <div className="result-cite">
         {icon && (
           <img
             src={icon}
             alt=""
-            width={13}
-            height={13}
-            style={{ marginRight: 5, verticalAlign: "middle", opacity: 0.8 }}
+            width={16}
+            height={16}
             onError={e => (e.currentTarget.style.display = "none")}
           />
         )}
-        {r.URL}
+        <span>{hostname}</span>
       </div>
       <div className="result-title">
         <a href={r.URL} target="_blank" rel="noopener noreferrer">{r.Title}</a>
