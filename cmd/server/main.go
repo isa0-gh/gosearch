@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/isa0-gh/gosearch/internal/academic"
 	"github.com/isa0-gh/gosearch/internal/apps"
@@ -232,6 +235,73 @@ func handleGames(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+type logEntry struct {
+	Timestamp  string `json:"timestamp"`
+	IP         string `json:"ip"`
+	Method     string `json:"method"`
+	Path       string `json:"path"`
+	Query      string `json:"query,omitempty"`
+	Status     int    `json:"status"`
+	Duration   string `json:"duration"`
+	UserAgent  string `json:"user_agent,omitempty"`
+	Referer    string `json:"referer,omitempty"`
+}
+
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		return splitFirst(xff, ',')
+	}
+	if xri := r.Header.Get("X-Real-Ip"); xri != "" {
+		return xri
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
+func splitFirst(s string, sep byte) string {
+	for i := 0; i < len(s); i++ {
+		if s[i] == sep {
+			return strings.TrimSpace(s[:i])
+		}
+	}
+	return strings.TrimSpace(s)
+}
+
+func loggerMiddleware(next http.Handler) http.Handler {
+	enc := json.NewEncoder(os.Stdout)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(sw, r)
+
+		entry := logEntry{
+			Timestamp: start.UTC().Format(time.RFC3339),
+			IP:        clientIP(r),
+			Method:    r.Method,
+			Path:      r.URL.Path,
+			Query:     r.URL.RawQuery,
+			Status:    sw.status,
+			Duration:  time.Since(start).String(),
+			UserAgent: r.UserAgent(),
+			Referer:   r.Referer(),
+		}
+		enc.Encode(entry)
+	})
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/web", handleWeb)
@@ -248,5 +318,5 @@ func main() {
 	}
 	addr := ":" + port
 	log.Printf("gosearch server listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Fatal(http.ListenAndServe(addr, loggerMiddleware(mux)))
 }
