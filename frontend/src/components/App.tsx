@@ -85,6 +85,47 @@ function SearchBar({ query, setQuery, onSubmit, autoFocus }: {
   );
 }
 
+const DEFAULT_SOURCES: Record<Tab, string> = {
+  web: "ddg",
+  software: "github",
+  apps: "flathub",
+  academic: "openalex",
+  vuln: "nvd",
+  ml: "ollama",
+  games: "steam",
+};
+
+function getSourceForTab(tab: Tab, states: Record<string, string>): string {
+  if (tab === "web") return states.engine;
+  if (tab === "software") return states.software;
+  if (tab === "apps") return states.apps;
+  if (tab === "academic") return states.academic;
+  if (tab === "vuln") return states.vuln;
+  if (tab === "ml") return states.ml;
+  return states.games;
+}
+
+function pushURL(q: string, tab: Tab, source: string) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (tab !== "web") params.set("tab", tab);
+  if (source && source !== DEFAULT_SOURCES[tab]) params.set("source", source);
+  const qs = params.toString();
+  const url = qs ? `/?${qs}` : "/";
+  window.history.pushState(null, "", url);
+}
+
+function readURL(): { q: string; tab: Tab; source: string } | null {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get("q") ?? "";
+  if (!q) return null;
+  const tab = (params.get("tab") ?? "web") as Tab;
+  const validTabs: Tab[] = ["web", "software", "apps", "games", "ml", "academic", "vuln"];
+  if (!validTabs.includes(tab)) return { q, tab: "web", source: "ddg" };
+  const source = params.get("source") ?? DEFAULT_SOURCES[tab];
+  return { q, tab, source };
+}
+
 export default function App() {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<Tab>("web");
@@ -108,14 +149,67 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
   }, [dark]);
 
-  const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
+  const sourceStates = { engine, software: source, apps: appsSource, academic: academicSource, vuln: vulnSource, ml: mlSource, games: gamesSource };
 
-  const fetch = async (pageNum: number, append: boolean) => {
-    const src = tab === "software" ? source : tab === "academic" ? academicSource : tab === "vuln" ? vulnSource : tab === "apps" ? appsSource : tab === "ml" ? mlSource : tab === "games" ? gamesSource : source;
-    const data = await doSearch(tab, query.trim(), engine, src, pageNum);
+  const doFetch = async (pageNum: number, append: boolean, searchTab: Tab = tab, searchQuery: string = query) => {
+    const src = searchTab === "software" ? source : searchTab === "academic" ? academicSource : searchTab === "vuln" ? vulnSource : searchTab === "apps" ? appsSource : searchTab === "ml" ? mlSource : searchTab === "games" ? gamesSource : engine;
+    const data = await doSearch(searchTab, searchQuery.trim(), engine, src, pageNum);
     setResults(prev => append ? [...prev, ...(data ?? [])] : (data ?? []));
     return data;
   };
+
+  const runSearch = async (searchQuery: string, searchTab: Tab, searchSource?: string) => {
+    setQuery(searchQuery);
+    setTab(searchTab);
+    setLoading(true);
+    setError("");
+    setPage(1);
+    setHasSearched(true);
+
+    if (searchSource) {
+      if (searchTab === "web") setEngine(searchSource);
+      else if (searchTab === "software") setSource(searchSource);
+      else if (searchTab === "apps") setAppsSource(searchSource);
+      else if (searchTab === "academic") setAcademicSource(searchSource);
+      else if (searchTab === "vuln") setVulnSource(searchSource);
+      else if (searchTab === "ml") setMlSource(searchSource);
+      else if (searchTab === "games") setGamesSource(searchSource);
+    }
+
+    const src = searchSource ?? getSourceForTab(searchTab, sourceStates);
+    try {
+      const data = await doSearch(searchTab, searchQuery.trim(), engine, src, 1);
+      setResults(data ?? []);
+    } catch {
+      setError(t("error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const initial = readURL();
+    if (initial) {
+      runSearch(initial.q, initial.tab, initial.source);
+    }
+
+    const onPop = () => {
+      const state = readURL();
+      if (state) {
+        runSearch(state.q, state.tab, state.source);
+      } else {
+        setHasSearched(false);
+        setResults([]);
+        setQuery("");
+        setError("");
+        setPage(1);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const toggleLang = () => i18n.changeLanguage(i18n.language === "en" ? "tr" : "en");
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -124,8 +218,10 @@ export default function App() {
     setError("");
     setPage(1);
     setHasSearched(true);
+    const src = getSourceForTab(tab, sourceStates);
+    pushURL(query.trim(), tab, src);
     try {
-      await fetch(1, false);
+      await doFetch(1, false);
     } catch {
       setError(t("error"));
     } finally {
@@ -137,7 +233,7 @@ export default function App() {
     const next = page + 1;
     setLoadingMore(true);
     try {
-      await fetch(next, true);
+      await doFetch(next, true);
       setPage(next);
     } catch {
       setError(t("error"));
@@ -151,6 +247,10 @@ export default function App() {
     setResults([]);
     setError("");
     setPage(1);
+    if (hasSearched) {
+      const src = getSourceForTab(id, sourceStates);
+      pushURL(query.trim(), id, src);
+    }
   };
 
   const goHome = () => {
@@ -159,6 +259,7 @@ export default function App() {
     setQuery("");
     setError("");
     setPage(1);
+    window.history.pushState(null, "", "/");
   };
 
   const headerActions = (
