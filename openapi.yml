@@ -75,43 +75,6 @@ paths:
         "502":
           $ref: "#/components/responses/BadGateway"
 
-  /torrents:
-    get:
-      summary: Torrent search
-      parameters:
-        - name: q
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: source
-          in: query
-          schema:
-            type: string
-            enum: [piratebay, nyaa]
-            default: piratebay
-        - name: pages
-          in: query
-          schema:
-            type: integer
-            default: 1
-            description: Used by nyaa only
-      responses:
-        "200":
-          description: Torrent results
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/Torrent"
-                    - $ref: "#/components/schemas/NyaaTorrent"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "502":
-          $ref: "#/components/responses/BadGateway"
-
   /academic:
     get:
       summary: Academic paper search
@@ -338,54 +301,6 @@ components:
         Language:
           type: string
         UpdatedAt:
-          type: string
-          format: date-time
-
-    Torrent:
-      type: object
-      properties:
-        Name:
-          type: string
-        InfoHash:
-          type: string
-        MagnetURL:
-          type: string
-        Seeders:
-          type: integer
-        Leechers:
-          type: integer
-        Size:
-          type: integer
-          description: Size in bytes
-        AddedAt:
-          type: string
-          format: date-time
-        Category:
-          type: string
-        Uploader:
-          type: string
-
-    NyaaTorrent:
-      type: object
-      properties:
-        Name:
-          type: string
-        URL:
-          type: string
-          format: uri
-        MagnetURL:
-          type: string
-        Size:
-          type: string
-        Category:
-          type: string
-        Seeders:
-          type: integer
-        Leechers:
-          type: integer
-        Downloads:
-          type: integer
-        AddedAt:
           type: string
           format: date-time
 
