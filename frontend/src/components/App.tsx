@@ -220,7 +220,7 @@ export default function App() {
           {tab === "ml" && (results as ModelType[]).map((r, i) => <ModelCard key={i} r={r} />)}
           {tab === "games" && gamesSource === "steam" && (results as Game[]).map((r, i) => <GameCard key={i} r={r} />)}
           {tab === "games" && gamesSource === "itchio" && (results as ItchGame[]).map((r, i) => <ItchGameCard key={i} r={r} />)}
-          {tab === "games" && gamesSource === "gog" && (results as GogGame[]).map((r, i) => <GogGameCard key={i} r={r} />)}
+          {tab === "games" && gamesSource === "gog" && (results as GogGame[]).map((r, i) => <GogGameCard key={r.ID || i} r={r} />)}
         </div>
 
         {hasResults && (
