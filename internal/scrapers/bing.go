@@ -4,15 +4,18 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
+
 const baseBingURL = "https://www.bing.com/search"
 
 func newBingRequest(query string, first int) (*http.Request, error) {
-	url := fmt.Sprintf("%s?q=%s&first=%d&FORM=PERE", baseBingURL, query, first)
+	url := fmt.Sprintf("%s?q=%s&first=%d&FORM=PERE", baseBingURL, url.QueryEscape(query), first)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -68,7 +71,8 @@ func parseBingResults(doc *goquery.Document) []Result {
 
 // BingSearch fetches up to `pages` pages of results for query.
 func BingSearch(query string, pages int) ([]Result, error) {
-	client := &http.Client{}
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{Jar: jar}
 	var allResults []Result
 
 	for p := 0; p < pages; p++ {
@@ -76,6 +80,11 @@ func BingSearch(query string, pages int) ([]Result, error) {
 		req, err := newBingRequest(query, first)
 		if err != nil {
 			return allResults, fmt.Errorf("page %d: %w", p+1, err)
+		}
+		if p > 0 {
+			prevURL := fmt.Sprintf("%s?q=%s&first=%d&FORM=PERE", baseBingURL, url.QueryEscape(query), p*10-9)
+			req.Header.Set("Referer", prevURL)
+			req.Header.Set("Sec-Fetch-Site", "same-origin")
 		}
 		resp, err := client.Do(req)
 		if err != nil {
